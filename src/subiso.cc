@@ -1,78 +1,126 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <set>
+#include <vector>
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
+#include <chrono>
 
 using namespace std;
 
-vector<set<int>> constructGraph(string fileName)
+vector<vector<int>> constructGraph(string fileName)
 {
-	vector<set<int>> graph;
+	vector<vector<int>> graph;
 	graph.resize(32);
-        ifstream fileInput(fileName);
+	ifstream fileInput(fileName);
 	string line; 
-        if(fileInput.is_open())
-        {
+	if(fileInput.is_open())
+	{
 		while(getline(fileInput, line))
-                {
+		{
 			int space = line.find(" ");
-		        
+
 			int node1 = stoi(line.substr(0, space));
 			int node2 = stoi(line.substr(space+1));
-			graph[node1].insert(node2);
-                }
-        }
-        else
-        {
-                cout<<"Error: File not found!"<<endl;
-        }
+			graph[node1].push_back(node2);
+		}
+	}
+	else
+	{
+		cout<<"Error: File not found!"<<endl;
+	}
 
 	return graph;
 }	
 
-bool duplicate(vector<set<int>> container, set<int> element)
+vector<vector<int>> initEmbedding(vector<vector<int>> graph)
 {
-	for(int i = 0; i < container.size(); i++)
-	{
-		if(container[i] == element)
-		{
-			return true;
-		}
-
-	}
-	return false;
-}
-
-vector<set<int>> initEmbedding(vector<set<int>> graph)
-{
-	vector<set<int>> twoVertEmbed;
+	vector<vector<int>> twoVertEmbed;
 	for(int i = 0; i < graph.size(); i++)
 	{
-		for(auto setElem : graph[i])
+		for(int j = 0; j <  graph[i].size(); j++)
 		{
-			set<int> temp = {setElem, i};
-			//cout << typeid(setElem).name() << endl;
-			//cout << setElem << endl;
-			if(!duplicate(twoVertEmbed, temp))
+			if(i <= graph[i][j])
 			{
-				twoVertEmbed[i].push_back(temp);
+				vector<int> temp = {i, graph[i][j]};
+				twoVertEmbed.push_back(temp);
 			}	
-			cout << i << ", " << setElem << endl;
-			
+
 		}
- 	}
+	}
 
 	return twoVertEmbed;
 }
 
-void extend(vector<set<int>> graph, int maxEmbeddingSize)
+bool exists(vector<int> vec, int obj)
 {
-	vector<set<int>> twoVertEmbed = initEmbedding(graph);
+	for(int i = 0; i < vec.size(); i++)
+	{
+		if(vec[i] == obj)
+		{
+			return true;
+		}
+	}
 
+	return false;
+}
 
+bool isAutomorph(vector<int> temp, vector<vector<int>> embed)
+{	
+	sort(temp.begin(), temp.end());
+	for(auto element : embed)
+	{
+		sort(element.begin(), element.end());
+		if(temp == element)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+vector<vector<int>> extend(vector<vector<int>> graph, int maxEmbeddingSize)
+{
+
+	vector<vector<int>> twoVertEmbed = initEmbedding(graph);
+	vector<vector<int>> embedding = twoVertEmbed;
+
+	for(int i = 0; i < embedding.size(); i++)
+	{
+		int graphIndex = embedding[i].back();
+		for(int j = 0; j < graph[graphIndex].size(); j++)
+		{
+			vector<int> temp = embedding[i];
+
+			if(!exists(temp, graph[graphIndex][j]) && temp.size() < maxEmbeddingSize)
+			{
+				temp.push_back(graph[graphIndex][j]);
+				if(!isAutomorph(temp, embedding))
+				{
+					embedding.push_back(temp);
+				}
+
+			}
+		}
+
+	}
+
+	return embedding;
+}
+
+void printEmbedding(vector<vector<int>> embedding)
+{
+	for(auto subgraph: embedding)
+	{
+		cout << subgraph[0] << ": ";
+		for(auto vertex: subgraph)
+		{
+			cout << vertex << " ";
+		}
+		cout << endl;
+	}
 }
 
 int main(int argc, char* argv[])
@@ -84,9 +132,18 @@ int main(int argc, char* argv[])
 	}
 	string fileName = argv[1];
 	int maxSize = atoi(argv[2]);
+
+	vector<vector<int>> graph = constructGraph(fileName);
 	
-	vector<set<int>> graph = constructGraph(fileName);
-		
-	extend(graph, maxSize);	
+	auto start = std::chrono::system_clock::now();
+	vector<vector<int>> twoVertEmbed = initEmbedding(graph);	
+	vector<vector<int>> embedding = extend(graph, maxSize);	
+	auto end = std::chrono::system_clock::now();
+
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "ms" << endl;
+
+
+	//printEmbedding(embedding);
 	return 0;
 }
