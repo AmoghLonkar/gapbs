@@ -8,13 +8,23 @@
 #include <chrono>
 
 using namespace std;
+void printVec(vector<int> vec)
+{
+	for(int i : vec)
+	{
+		cout << i << " ";
+	}
+	cout << endl;
+}
 
 vector<vector<int>> constructGraph(string fileName)
 {
 	vector<vector<int>> graph;
-	graph.resize(32);
+	graph.resize(100000000);
 	ifstream fileInput(fileName);
 	string line; 
+	vector<int> temp;
+	
 	if(fileInput.is_open())
 	{
 		while(getline(fileInput, line))
@@ -32,7 +42,18 @@ vector<vector<int>> constructGraph(string fileName)
 	}
 
 	return graph;
-}	
+}
+
+void printGraph(vector<vector<int>> graph)
+{
+	for(int i = 0; i < graph.size(); i++)
+	{
+		for(auto vertex: graph[i])
+		{
+			cout << i << " " << vertex << endl;
+		}
+	}
+}
 
 vector<vector<int>> initEmbedding(vector<vector<int>> graph)
 {
@@ -86,10 +107,13 @@ vector<vector<int>> extend(vector<vector<int>> graph, int maxEmbeddingSize)
 
 	vector<vector<int>> twoVertEmbed = initEmbedding(graph);
 	vector<vector<int>> embedding = twoVertEmbed;
-
+        
+	//#pragma omp parallel for
 	for(int i = 0; i < embedding.size(); i++)
 	{
 		int graphIndex = embedding[i].back();
+		
+		//#pragma omp parallel for
 		for(int j = 0; j < graph[graphIndex].size(); j++)
 		{
 			vector<int> temp = embedding[i];
@@ -97,7 +121,7 @@ vector<vector<int>> extend(vector<vector<int>> graph, int maxEmbeddingSize)
 			if(!exists(temp, graph[graphIndex][j]) && temp.size() < maxEmbeddingSize)
 			{
 				temp.push_back(graph[graphIndex][j]);
-				if(!isAutomorph(temp, embedding))
+				//if(!isAutomorph(temp, embedding))
 				{
 					embedding.push_back(temp);
 				}
@@ -132,7 +156,7 @@ int main(int argc, char* argv[])
 	}
 	string fileName = argv[1];
 	int maxSize = atoi(argv[2]);
-
+        
 	vector<vector<int>> graph = constructGraph(fileName);
 	
 	auto start = std::chrono::system_clock::now();
