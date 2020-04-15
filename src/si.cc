@@ -71,12 +71,12 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 {
 
 	vector<vector<NodeID>> embedding = InitEmbed(g);
-        
+
 	//#pragma omp parallel for
-	for(NodeID u = 0; u < embedding.size(); u++)
+	for(int u = 0; u < embedding.size(); u++)
 	{
 		NodeID extVert = embedding[u].back();
-		
+
 		//#pragma omp parallel for
 		for(NodeID v : g.out_neigh(extVert))
 		{
@@ -97,6 +97,66 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 	return embedding;
 }
 
+bool isNeigh(NodeID u, Neighborhood N)
+{
+	//For nodes in neighborhood, check if u exists
+}
+
+vector<vector<NodeID>> CF(const Graph &g, int size)
+{
+	vector<vector<NodeID>> cliques;
+
+	for(NodeID u = 0; u < g.num_nodes(u); u++)
+	{
+		if (u.out_degree() >= size - 1)
+		{
+			break;
+		}
+		else
+		{
+			vector<NodeID> temp;
+			while(temp.size() != size)
+			{
+				for(NodeID v: g.out_neigh(u))
+				{	
+					if(v.out_degree() >= size - 1)
+					{
+						if(temp.size() > 2)
+						{
+							//check if each vertex in temp is connected with every other vertex
+							int count = 0;
+							for(NodeID vertex: temp)
+							{
+								if(isNeigh(v, g.out_neigh(vertex)))
+								{
+									count++;
+								}
+								else
+								{
+									break;
+								}
+
+							}
+
+							if(count == temp.size())
+							{
+								temp.push_back(v);
+							}
+
+						}
+						else
+						{
+							temp.push_back(v);
+						}
+					}
+				}
+			}	
+
+		}	
+	}
+	return cliques;
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -107,14 +167,15 @@ int main(int argc, char* argv[])
 	}
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-	
-	
+
+
 	auto start = std::chrono::system_clock::now();
-	vector<vector<NodeID>> embedding = Extend(g, atoi(argv[3]));
+	//vector<vector<NodeID>> embedding = Extend(g, atoi(argv[3]));
+	vector<vector<NodeID>> embedding = InitEmbed(g);
 	auto end = std::chrono::system_clock::now();
 
 	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "ms" << endl; 
+	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "ms" << endl; 
 
 	return 0;
 }
