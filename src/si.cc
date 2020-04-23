@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <string>
 #include "benchmark.h"
 #include "builder.h"
 #include "command_line.h"
@@ -158,7 +159,9 @@ vector<vector<NodeID>> CF(const Graph &g, int size)
 						}
 					}
 				}
-			}	
+			}
+			PrintVec(temp);
+			cliques.push_back(temp);	
 
 		}	
 	}
@@ -169,21 +172,28 @@ vector<vector<NodeID>> CF(const Graph &g, int size)
 int main(int argc, char* argv[])
 {
 	CLBase cli(argc, argv, "subgraph isomorphism");
-	if (!cli.ParseArgs())
-	{
+	if (!cli.ParseArgs()){
 		return -1;
 	}
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-
+		
+	/*
+	 *To add -cf as a command line flag
+	bool callCF = 0;
+	string commandFlag = argv[3];
+	if (commandFlag.compare("-cf")){
+		callCF = 1;
+	}
+	*/
 
 	auto start = std::chrono::system_clock::now();
 	//vector<vector<NodeID>> embedding = Extend(g, atoi(argv[3]));
-	vector<vector<NodeID>> embedding = InitEmbed(g);
+	//vector<vector<NodeID>> embedding = InitEmbed(g);
+	vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
 	auto end = std::chrono::system_clock::now();
-
 	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "ms" << endl; 
-
+	
 	return 0;
 }
