@@ -111,58 +111,47 @@ bool isNeigh(const Graph &g, NodeID u, NodeID v) {
 	return false;
 }
 
-vector<vector<NodeID>> CF(const Graph &g, int size)
-{
+vector<vector<NodeID>> CF(const Graph &g, int size){
 	vector<vector<NodeID>> cliques;
 
-	for(NodeID u = 0; u < g.num_nodes(); u++)
-	{
-		if (g.out_degree(u) >= size - 1)
-		{
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		if (g.out_degree(u) < size - 1){
 			break;
 		}
-		else
-		{
+		else{
 			vector<NodeID> temp;
-			while(temp.size() != size)
-			{
-				for(NodeID v: g.out_neigh(u))
-				{	
-					if(g.out_degree(v) >= size - 1)
-					{
-						if(temp.size() > 2)
-						{
+			temp.push_back(u);
+			if(temp.size() < size){
+				for(NodeID v: g.out_neigh(u)){	
+					if(g.out_degree(v) >= size - 1){
+						if(temp.size() > 2){
 							//check if each vertex in temp is connected with every other vertex
 							int count = 0;
-							for(NodeID vertex: temp)
-							{
-								if(isNeigh(g, v, vertex))
-								{
+							for(NodeID vertex: temp){
+								if(isNeigh(g, v, vertex) && u < v){
 									count++;
 								}
-								else
-								{
+								else{
 									break;
 								}
 
 							}
 
-							if(count == temp.size())
-							{
+							if(count == temp.size()){
 								temp.push_back(v);
 							}
 
 						}
-						else
-						{
+						else if(u < v){
 							temp.push_back(v);
 						}
 					}
 				}
 			}
-			PrintVec(temp);
-			cliques.push_back(temp);	
-
+			if(temp.size() == size){
+				PrintVec(temp);
+				cliques.push_back(temp);
+			}	
 		}	
 	}
 	return cliques;
