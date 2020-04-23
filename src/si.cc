@@ -97,18 +97,26 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 	return embedding;
 }
 
-bool isNeigh(NodeID u, Neighborhood N)
-{
+bool isNeigh(const Graph &g, NodeID u, NodeID v) {
 	//For nodes in neighborhood, check if u exists
+	vector<NodeID> neighborhood;
+	for(NodeID node: g.out_neigh(u))
+	{
+		if (node == v)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 vector<vector<NodeID>> CF(const Graph &g, int size)
 {
 	vector<vector<NodeID>> cliques;
 
-	for(NodeID u = 0; u < g.num_nodes(u); u++)
+	for(NodeID u = 0; u < g.num_nodes(); u++)
 	{
-		if (u.out_degree() >= size - 1)
+		if (g.out_degree(u) >= size - 1)
 		{
 			break;
 		}
@@ -119,7 +127,7 @@ vector<vector<NodeID>> CF(const Graph &g, int size)
 			{
 				for(NodeID v: g.out_neigh(u))
 				{	
-					if(v.out_degree() >= size - 1)
+					if(g.out_degree(v) >= size - 1)
 					{
 						if(temp.size() > 2)
 						{
@@ -127,7 +135,7 @@ vector<vector<NodeID>> CF(const Graph &g, int size)
 							int count = 0;
 							for(NodeID vertex: temp)
 							{
-								if(isNeigh(v, g.out_neigh(vertex)))
+								if(isNeigh(g, v, vertex))
 								{
 									count++;
 								}
