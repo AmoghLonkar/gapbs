@@ -113,10 +113,9 @@ bool isNeigh(const Graph &g, NodeID u, NodeID v) {
 
 vector<vector<NodeID>> CF(const Graph &g, int size){
 	vector<vector<NodeID>> cliques;
-
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		if (g.out_degree(u) < size - 1){
-			break;
+			continue;
 		}
 		else{
 			vector<NodeID> temp;
@@ -149,7 +148,7 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 				}
 			}
 			if(temp.size() == size){
-				PrintVec(temp);
+				//PrintVec(temp);
 				cliques.push_back(temp);
 			}	
 		}	
@@ -166,7 +165,7 @@ int main(int argc, char* argv[])
 	}
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-		
+	//g.PrintTopology();	
 	/*
 	 *To add -cf as a command line flag
 	bool callCF = 0;
