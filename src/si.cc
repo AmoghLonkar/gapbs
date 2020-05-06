@@ -3,12 +3,12 @@
 #include <vector>
 #include <chrono>
 #include <string>
+#include <omp.h>
 #include "benchmark.h"
 #include "builder.h"
 #include "command_line.h"
 #include "graph.h"
 #include "pvector.h"
-
 using namespace std;
 
 void PrintVec(vector<NodeID> vec)
@@ -98,12 +98,10 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 	return embedding;
 }
 
-bool isNeigh(const Graph &g, NodeID u, NodeID v) {
-	//For nodes in neighborhood, check if u exists
-	vector<NodeID> neighborhood;
+bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
 	for(NodeID node: g.out_neigh(u))
 	{
-		if (node == v)
+		if ( node == v)
 		{
 			return true;
 		}
@@ -113,6 +111,8 @@ bool isNeigh(const Graph &g, NodeID u, NodeID v) {
 
 vector<vector<NodeID>> CF(const Graph &g, int size){
 	vector<vector<NodeID>> cliques;
+	//int cliqueSize = size;
+	#pragma omp parallel for shared(g, cliques, size) private(u, v, temp, vertex, count)
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		if (g.out_degree(u) < size - 1){
 			continue;
@@ -127,7 +127,7 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 							//check if each vertex in temp is connected with every other vertex
 							int count = 0;
 							for(NodeID vertex: temp){
-								if(isNeigh(g, v, vertex) && u < v){
+								if(IsNeigh(g, v, vertex) && u < v){
 									count++;
 								}
 								else{
@@ -147,6 +147,7 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 					}
 				}
 			}
+			#pragma omp critical (ListCliques)
 			if(temp.size() == size){
 				//PrintVec(temp);
 				cliques.push_back(temp);
@@ -166,22 +167,16 @@ int main(int argc, char* argv[])
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();	
-	/*
-	 *To add -cf as a command line flag
-	bool callCF = 0;
-	string commandFlag = argv[3];
-	if (commandFlag.compare("-cf")){
-		callCF = 1;
-	}
-	*/
 
 	auto start = std::chrono::system_clock::now();
 	//vector<vector<NodeID>> embedding = Extend(g, atoi(argv[3]));
 	//vector<vector<NodeID>> embedding = InitEmbed(g);
-	vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
+	vector<vector<NodeID>> embedding = CF(g, atoi(argv[4]));
+	//cout << "Size: " << embedding.size() << endl;
 	auto end = std::chrono::system_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "ms" << endl; 
+	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl; 
 	
 	return 0;
 }
