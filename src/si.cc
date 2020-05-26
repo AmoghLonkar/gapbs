@@ -9,6 +9,8 @@
 #include "command_line.h"
 #include "graph.h"
 #include "pvector.h"
+#include "platform_atomics.h"
+
 using namespace std;
 
 void PrintVec(vector<NodeID> vec)
@@ -98,21 +100,49 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 	return embedding;
 }
 
-bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
-	for(NodeID node: g.out_neigh(u))
-	{
-		if ( node == v)
-		{
+bool binSearch(vector<NodeID> list, NodeID target){
+	int l = 0;
+	int r = list.size() - 1;
+	int mid = 0;
+	while(l <= r){
+		mid = l + (r - l / 2);
+		if(list[mid] > target){
+			r = mid - 1;
+		}
+		else if(list[mid] < target){
+			l = mid + 1;
+		}
+		else{
 			return true;
 		}
 	}
-	return false;
+	return false;	
+}
+
+
+bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
+	vector<vector<NodeID>> neighborhood;
+	for(NodeID node: g.out_neigh(u))
+	{
+		/*
+		if ( node == v)
+		{
+			return true;
+		}*/
+		if(!neighborhood[u].empty()){
+			neighborhood[u].push_back(node);
+		}
+	
+		cout << "here" << endl;
+	}
+
+	return binSearch(neighborhood[u], v);
 }
 
 vector<vector<NodeID>> CF(const Graph &g, int size){
 	vector<vector<NodeID>> cliques;
-	//int cliqueSize = size;
-	#pragma omp parallel for shared(g, cliques, size) private(u, v, temp, vertex, count)
+	#pragma omp parallel for shared(g, numCliques, size) private(u, v, temp, vertex, count, localBuffer)
+	vector<vector<NodeID>> localBuffer;
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		if (g.out_degree(u) < size - 1){
 			continue;
@@ -147,15 +177,23 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 					}
 				}
 			}
+			/*
+			if(temp.size() == size){
+				localBuffer.push_back(temp);
+			}
+			*/
 			#pragma omp critical (ListCliques)
 			if(temp.size() == size){
-				//PrintVec(temp);
+			//if(localBuffer.size() > 100){
+				PrintVec(temp);
 				cliques.push_back(temp);
+				//#pragma omp critical
+				//cliques.insert(cliques.end(), localBuffer.begin(), localBuffer.end());
+				//localBuffer.clear();
 			}	
 		}	
 	}
 	return cliques;
-
 }
 
 int main(int argc, char* argv[])
@@ -176,6 +214,7 @@ int main(int argc, char* argv[])
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	cout << "Number of cliques: " << embedding.size() << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl; 
 	
 	return 0;
