@@ -100,7 +100,18 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 	return embedding;
 }
 
-bool binSearch(vector<NodeID> list, NodeID target){
+vector<vector<NodeID>> GetNeigh(Graph &g){
+	vector<vector<NodeID>> neighborhood(g.num_nodes());
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		for(NodeID node: g.out_neigh(u))
+		{	
+			neighborhood[u].push_back(node);
+		}
+	}
+	return neighborhood;	
+}
+
+bool IsConnected(vector<NodeID> list, NodeID target){
 	int l = 0;
 	int r = list.size() - 1;
 	int mid = 0;
@@ -121,22 +132,14 @@ bool binSearch(vector<NodeID> list, NodeID target){
 
 
 bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
-	vector<vector<NodeID>> neighborhood;
 	for(NodeID node: g.out_neigh(u))
-	{
-		/*
+	{	
 		if ( node == v)
 		{
 			return true;
-		}*/
-		if(!neighborhood[u].empty()){
-			neighborhood[u].push_back(node);
 		}
-	
-		cout << "here" << endl;
 	}
-
-	return binSearch(neighborhood[u], v);
+	return false;
 }
 
 vector<vector<NodeID>> CF(const Graph &g, int size){
@@ -185,7 +188,7 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 			#pragma omp critical (ListCliques)
 			if(temp.size() == size){
 			//if(localBuffer.size() > 100){
-				PrintVec(temp);
+				//PrintVec(temp);
 				cliques.push_back(temp);
 				//#pragma omp critical
 				//cliques.insert(cliques.end(), localBuffer.begin(), localBuffer.end());
@@ -205,7 +208,8 @@ int main(int argc, char* argv[])
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();	
-
+	
+	vector<vector<NodeID>> neighborhood = GetNeigh(g);
 	auto start = std::chrono::system_clock::now();
 	//vector<vector<NodeID>> embedding = Extend(g, atoi(argv[3]));
 	//vector<vector<NodeID>> embedding = InitEmbed(g);
