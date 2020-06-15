@@ -144,13 +144,14 @@ bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
 
 vector<vector<NodeID>> CF(const Graph &g, int size){
 	vector<vector<NodeID>> cliques;
-	#pragma omp parallel for shared(g, numCliques, size) private(u, v, temp, vertex, count, localBuffer)
-	vector<vector<NodeID>> localBuffer;
+	//#pragma omp parallel for shared(g, numCliques, size) private(u, v, temp, vertex, count, localBuffer)
+	#pragma omp parallel for
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		if (g.out_degree(u) < size - 1){
 			continue;
 		}
 		else{
+			vector<vector<NodeID>> localBuffer;
 			vector<NodeID> temp;
 			temp.push_back(u);
 			if(temp.size() < size){
@@ -213,7 +214,7 @@ int main(int argc, char* argv[])
 	auto start = std::chrono::system_clock::now();
 	//vector<vector<NodeID>> embedding = Extend(g, atoi(argv[3]));
 	//vector<vector<NodeID>> embedding = InitEmbed(g);
-	vector<vector<NodeID>> embedding = CF(g, atoi(argv[4]));
+	vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
 	//cout << "Size: " << embedding.size() << endl;
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
