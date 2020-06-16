@@ -75,12 +75,11 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 
 	vector<vector<NodeID>> embedding = InitEmbed(g);
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for(int u = 0; u < embedding.size(); u++)
 	{
 		NodeID extVert = embedding[u].back();
 
-		//#pragma omp parallel for
 		for(NodeID v : g.out_neigh(extVert))
 		{
 			vector<NodeID> temp = embedding[u];
@@ -89,6 +88,7 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 			{
 				temp.push_back(v);
 				//if(!IsAutomorph(temp, embedding))
+				#pragma omp critical
 				{
 					//PrintVec(temp);
 					embedding.push_back(temp);
