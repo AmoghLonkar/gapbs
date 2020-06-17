@@ -84,13 +84,14 @@ vector<vector<NodeID>> Extend(const Graph &g, int maxEmbeddingSize)
 		{
 			vector<NodeID> temp = embedding[u];
 
-			if(!Exists(temp, v) && temp.size() < maxEmbeddingSize)
+			//if(!Exists(temp, v) && temp.size() < maxEmbeddingSize)
+			if((extVert < v) && (temp.size() < maxEmbeddingSize))
 			{
 				temp.push_back(v);
 				//if(!IsAutomorph(temp, embedding))
 				#pragma omp critical
 				{
-					//PrintVec(temp);
+					PrintVec(temp);
 					embedding.push_back(temp);
 				}
 			}
