@@ -14,7 +14,9 @@ int main(int argc, char* argv[]){
 	return -1;
     }
     Builder b(cli);
-    Graph g = b.MakeGraph();
+    Graph g = b.MakeGraph();	
+
+    //g.PrintTopology();
     
     ofstream outFile(argv[3]); 
     	if (outFile.is_open()){
@@ -23,8 +25,10 @@ int main(int argc, char* argv[]){
 		if(g.out_degree(u) > g.out_degree(v)){
 			outFile << v << " " << u << endl;
 		}
+		
 		else if(g.out_degree(u) == g.out_degree(v) && u > v){
-			outFile << v << " " << u << endl;
+			//outFile << v << " " << u << endl;
+			continue;
 		}
 		else if(g.out_degree(u) == g.out_degree(v) && v > u){
 			outFile << u << " " << v << endl;
@@ -36,4 +40,5 @@ int main(int argc, char* argv[]){
     	}
     outFile.close();		
     }
+			
 }
