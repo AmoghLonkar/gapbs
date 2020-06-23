@@ -24,25 +24,6 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
-void PrintSet(set<NodeID> s){
-	set<NodeID>::iterator si;
-	for(si = s.begin(); si != s.end(); ++si){
-		cout << *si << " "; 
-	}
-	cout << endl;
-}
-
-void PrintEmbedding(set<set<NodeID>> embed){
-	set<set<NodeID>>::const_iterator si;
-	set<NodeID>::iterator in;
-	for(si = embed.begin(); si != embed.end(); ++si){
-		for(in = si->begin(); in != si->end(); ++in){
-			cout << *in << " ";
-		}
-		cout << endl;
-	}
-}
-
 vector<vector<NodeID>> GetNeigh(Graph &g){
 	vector<vector<NodeID>> neighborhood(g.num_nodes());
 	for(NodeID u = 0; u < g.num_nodes(); u++){
@@ -50,7 +31,6 @@ vector<vector<NodeID>> GetNeigh(Graph &g){
 		{
 			neighborhood[u].push_back(node);
 		}
-		cout << u << ": " << PrintVec(neighborhood[u]);
 	}
 	return neighborhood;
 }
@@ -88,33 +68,31 @@ bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
 	return false;
 }
 
-set<NodeID> VecToSet(vector<NodeID> vec){
-	set<NodeID> s;
-	copy(s.begin(), s.end(), back_inserter(vec));
-	return s;
-}
-
+/*
 //vector<vector<NodeID>> CF(const Graph &g, int size, vector<vector<NodeID>> neighborhood){
-set<set<NodeID>> CF(const Graph &g, int size, vector<vector<NodeID>> neighborhood){
-	set<set<NodeID>> cliques;
-	#pragma omp parallel for shared(g, numCliques, size) private(u, v, temp, vertex, count, localBuffer)
-	vector<vector<NodeID>> localBuffer;
+vector<vector<NodeID>> CF(const Graph &g, int size){
+	vector<vector<NodeID>> cliques;
+	#pragma omp parallel for
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		if (g.out_degree(u) < size - 1){
 			continue;
 		}
 		else{
 			vector<NodeID> temp;
+			vector<vector<NodeID>> localBuffer;
+			//cout << u << ": " << endl;
 			temp.push_back(u);
-			if(temp.size() < size){
-				for(NodeID v: g.out_neigh(u)){	
+			for(NodeID v: g.out_neigh(u)){	
+				//cout << v << endl;
+				if(temp.size() < size){
+				//for(NodeID v: g.out_neigh(u)){	
 					//if(g.out_degree(v) >= size - 1){
 					if(temp.size() > 2){
 						//check if each vertex in temp is connected with every other vertex
 						int count = 0;
 						for(NodeID vertex: temp){
-							if((IsNeigh(g, v, vertex) && (u < v)){
-							//if((IsNeigh(g, v, vertex) || IsNeigh(g, vertex, v)) && u < v){
+							if(IsNeigh(g, v, vertex) && (u < v)){
+							//if((IsNeigh(g, v, vertex) || IsNeigh(g, vertex, v)) && (u < v)){
 								//if(IsConnected(neighborhood[v], vertex) && u < v){
 								count++;
 							}
@@ -135,34 +113,106 @@ set<set<NodeID>> CF(const Graph &g, int size, vector<vector<NodeID>> neighborhoo
 						//}
 				}
 				}
-				/*
+				
 				   if(temp.size() == size){
-				   localBuffer.push_back(temp);
+				   	localBuffer.push_back(temp);
 				   }
-				   */
+				   
+				//cout << u << ": ";
 				//PrintVec(temp);	
-				set<NodeID> tempSet = VecToSet(temp);
 				#pragma omp critical (ListCliques)
 				if(temp.size() == size){
 					//if(localBuffer.size() > 100){
 					//PrintVec(temp);
-					//cliques.push_back(temp);
-
-					//PrintSet(tempSet);
-					cliques.insert(tempSet);
-
+					cliques.push_back(temp);
 					//#pragma omp critical
 					//cliques.insert(cliques.end(), localBuffer.begin(), localBuffer.end());
 					//localBuffer.clear();
-				}	
+				//}	
 		}	
+		}
 	}
-	PrintEmbedding(cliques);
+	return cliques;
+}
+*/
+
+vector<vector<NodeID>> GetEdges(const Graph &g, int size){
+	vector<vector<NodeID>> edges;
+	for (NodeID u=0; u < g.num_nodes(); u++)
+	{	
+		if(g.out_degree(u) < size - 1){
+			continue;
+		}
+		else{
+			for (NodeID v : g.out_neigh(u))
+			{	
+				if(u <= v && g.out_degree(v) >= size - 1)
+				{
+					vector<NodeID> temp = {u, v};
+					edges.push_back(temp);
+				}
+				else{
+					continue;
+				}		
+	
+			}
+		}
+	}
+
+	return edges;
+}
+
+bool Connected(const Graph &g, vector<NodeID> vec, NodeID vertex){
+	int count = 0;
+	for(NodeID i: vec){
+		if(IsNeigh(g, i, vertex)){
+			count++;
+		}
+	}
+	if(count == vec.size()){
+		return true;
+	}
+	else{
+		return false;
+	}	
+}
+
+vector<vector<NodeID>> CF(const Graph &g, int size){
+	vector<vector<NodeID>> cliques;
+	vector<vector<NodeID>> embeddings = GetEdges(g, size);
+
+	#pragma omp parallel for
+	for(int u = 0; u < embeddings.size(); u++)
+	{
+		NodeID extVert = embeddings[u].back();
+
+		for(NodeID v : g.out_neigh(extVert)){
+			vector<NodeID> temp = embeddings[u];
+
+			//if(!Exists(temp, v) && temp.size() < maxEmbeddingSize)
+			if((extVert < v) && (temp.size() < size) && Connected(g, temp, v)){
+				temp.push_back(v);
+				//#pragma omp critical
+				{
+					if(temp.size() != size){
+						//PrintVec(temp);
+						embeddings.push_back(temp);
+					}
+					else{
+					//PrintVec(temp);
+					cliques.push_back(temp);
+					}
+				}
+
+			}
+		}
+	}
+
+	//return embeddings;
 	return cliques;
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]){
 	CLBase cli(argc, argv, "subgraph isomorphism");
 	if (!cli.ParseArgs()){
 		return -1;
@@ -171,14 +221,14 @@ int main(int argc, char* argv[])
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();
-	vector<vector<NodeID>> neighborhood = GetNeigh(g);
+	//vector<vector<NodeID>> neighborhood = GetNeigh(g);
 	auto start = std::chrono::system_clock::now();
 	//vector<vector<NodeID>> embedding = CF(g, atoi(argv[4]), neighborhood);
-	set<set<NodeID>> embedding = CF(g, atoi(argv[4]), neighborhood);
+	vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	//cout << "Number of cliques: " << embedding.size() << endl;
+	cout << "Number of cliques: " << embedding.size() << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
