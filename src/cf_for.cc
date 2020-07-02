@@ -94,25 +94,17 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 			for(NodeID k: g.out_neigh(j)){
 				temp = {i, j};
 
-				while(temp.size() != size){
-					if((g.out_degree(k) < size - 1) || (k <= j)){
-						break;
-					}
+				if((g.out_degree(k) < size - 1) || (k <= j)){
+					continue;
+				}
+				
+				if(Connected(g, temp, j, k)){
+					temp.push_back(k);
 					
-					if(Connected(g, temp, j, k)){
-						temp.push_back(k);
-						PrintVec(temp);
-
-						if(temp.size() == size){
-							//PrintVec(temp);
-							cliques.push_back(temp);
-
-						}
-
-						break;
+					if(temp.size() == size){
+						cliques.push_back(temp);
 					}
 				}		
-
 			}
 		}
 	}
