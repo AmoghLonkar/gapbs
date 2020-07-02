@@ -90,9 +90,16 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 			if((g.out_degree(j) < size -1) || (j <= i)){
 				continue;
 			}
+			
+			if(size > 3){	
+				temp = {i, j};
+			}
 
 			for(NodeID k: g.out_neigh(j)){
-				temp = {i, j};
+
+				if(size == 3){
+					temp = {i, j};
+				}	
 
 				if((g.out_degree(k) < size - 1) || (k <= j)){
 					continue;
