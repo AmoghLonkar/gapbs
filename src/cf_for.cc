@@ -24,8 +24,27 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
+vector<set<NodeID>> GetNeigh(Graph &g){
+//vector<vector<NodeID>> GetNeigh(Graph &g){
+	vector<set<NodeID>> neighborhood;
+	set<NodeID> temp;
+	
+	neighborhood.reserve(g.num_nodes());
+	//temp.reserve(100);
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		for(NodeID node: g.out_neigh(u))
+		{
+			temp.insert(node);
+			//temp.push_back(node);
+		}
+		neighborhood.push_back(temp);
+		temp.clear();
+	}
+	return neighborhood;
+}
+
 //Binary Search for connectedness
-bool IsConnected(vector<NodeID> list, NodeID target){
+bool BinNeigh(vector<NodeID> list, NodeID target){
 	int l = 0;
 	int r = list.size() - 1;
 	int mid = 0;
@@ -46,7 +65,7 @@ bool IsConnected(vector<NodeID> list, NodeID target){
 }
 
 //Linear search for connectedness
-bool IsNeigh(const Graph &g, NodeID u, NodeID v) {
+bool LinNeigh(const Graph &g, NodeID u, NodeID v) {
 	for(NodeID node: g.out_neigh(u))
 	{
 		if ( node == v)
@@ -65,7 +84,7 @@ bool Connected(const Graph &g, vector<NodeID> vec, NodeID extend, NodeID candida
 			continue;
 		}
 
-		if(IsNeigh(g, i, candidate)){
+		if(LinNeigh(g, i, candidate)){
 			count++;
 		}
 	}
@@ -79,13 +98,14 @@ bool Connected(const Graph &g, vector<NodeID> vec, NodeID extend, NodeID candida
 
 vector<vector<NodeID>> CF(const Graph &g, int size){
 	vector<vector<NodeID>> cliques;
-	vector<NodeID> temp;
 
+	#pragma omp parallel for
 	for(NodeID i = 0; i < g.num_nodes(); i++){
 		if(g.out_degree(i) < size - 1){
 			continue;
 		}
 
+		vector<NodeID> temp;
 		for(NodeID j: g.out_neigh(i)){
 			if((g.out_degree(j) < size -1) || (j <= i)){
 				continue;
@@ -109,7 +129,10 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 					temp.push_back(k);
 					
 					if(temp.size() == size){
-						cliques.push_back(temp);
+						#pragma omp critical
+						{
+							cliques.push_back(temp);
+						}
 					}
 				}		
 			}
@@ -129,11 +152,12 @@ int main(int argc, char* argv[]){
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();
 	auto start = std::chrono::system_clock::now();
-	vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
+	vector<set<NodeID>> neighborhood = GetNeigh(g);
+	//vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	cout << "Number of cliques: " << embedding.size() << endl;
+	//cout << "Number of cliques: " << embedding.size() << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
