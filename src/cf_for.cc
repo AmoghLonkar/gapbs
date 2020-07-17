@@ -24,18 +24,32 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
-vector<set<NodeID>> GetNeigh(Graph &g){
-//vector<vector<NodeID>> GetNeigh(Graph &g){
+vector<vector<NodeID>> GetNeighVec(Graph &g){
+	vector<vector<NodeID>> neighborhood;
+	vector<NodeID> temp;
+	
+	neighborhood.reserve(g.num_nodes());
+	temp.reserve(100);
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		for(NodeID node: g.out_neigh(u))
+		{
+			temp.push_back(node);
+		}
+		neighborhood.push_back(temp);
+		temp.clear();
+	}
+	return neighborhood;
+}
+
+vector<set<NodeID>> GetNeighSet(Graph &g){
 	vector<set<NodeID>> neighborhood;
 	set<NodeID> temp;
 	
 	neighborhood.reserve(g.num_nodes());
-	//temp.reserve(100);
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		for(NodeID node: g.out_neigh(u))
 		{
 			temp.insert(node);
-			//temp.push_back(node);
 		}
 		neighborhood.push_back(temp);
 		temp.clear();
@@ -50,7 +64,6 @@ bool BinNeigh(vector<NodeID> list, NodeID target){
 	int mid = 0;
 	while(l <= r){
 		mid = l + (r - l / 2);
-		cout << l << " " << mid << " " << r << endl;
 		if(list[mid] > target){
 			r = mid - 1;
 		}
@@ -62,6 +75,26 @@ bool BinNeigh(vector<NodeID> list, NodeID target){
 		}
 	}
 	return false;
+}
+
+bool BinConnected(vector<vector<NodeID>> neighborhood, vector<NodeID> vec, NodeID extend, NodeID candidate){
+	int count = 0;
+	for(NodeID i: vec){
+		if(i == extend){
+			count++;
+			continue;
+		}
+
+		if(BinNeigh(neighborhood[i], candidate)){
+			count++;
+		}
+	}
+	if(count == vec.size()){
+		return true;
+	}
+	else{
+		return false;
+	}
 }
 
 //Linear search for connectedness
@@ -76,7 +109,7 @@ bool LinNeigh(const Graph &g, NodeID u, NodeID v) {
 	return false;
 }
 
-bool Connected(const Graph &g, vector<NodeID> vec, NodeID extend, NodeID candidate){
+bool LinConnected(const Graph &g, vector<NodeID> vec, NodeID extend, NodeID candidate){
 	int count = 0;
 	for(NodeID i: vec){
 		if(i == extend){
@@ -96,7 +129,38 @@ bool Connected(const Graph &g, vector<NodeID> vec, NodeID extend, NodeID candida
 	}
 }
 
-vector<vector<NodeID>> CF(const Graph &g, int size){
+bool InSet(set<NodeID> outNeigh, NodeID target){
+	auto pos = outNeigh.find(target);
+
+	if(pos != outNeigh.end()){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+bool Connected(vector<set<NodeID>> neighborhood, vector<NodeID> vec, NodeID extend, NodeID candidate){
+	int count = 0;
+	for(NodeID i: vec){
+		if(i == extend){
+			count++;
+			continue;
+		}
+
+		if(InSet(neighborhood[i], candidate)){
+			count++;
+		}
+	}
+	if(count == vec.size()){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+vector<vector<NodeID>> CF(const Graph &g, vector<set<NodeID>> neighborhood ,int size){
 	vector<vector<NodeID>> cliques;
 
 	#pragma omp parallel for
@@ -125,7 +189,9 @@ vector<vector<NodeID>> CF(const Graph &g, int size){
 					continue;
 				}
 				
-				if(Connected(g, temp, j, k)){
+				//if(LinConnected(g, temp, j, k)){
+				//if(BinConnected(neighborhood, temp, j, k)){
+				if(Connected(neighborhood, temp, j, k)){
 					temp.push_back(k);
 					
 					if(temp.size() == size){
@@ -152,12 +218,15 @@ int main(int argc, char* argv[]){
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();
 	auto start = std::chrono::system_clock::now();
-	vector<set<NodeID>> neighborhood = GetNeigh(g);
-	//vector<vector<NodeID>> embedding = CF(g, atoi(argv[3]));
-	auto end = std::chrono::system_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	vector<set<NodeID>> neighborhood = GetNeighSet(g);
+	auto neighEnd = std::chrono::system_clock::now();
+	auto neighElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(neighEnd - start);
+	cout << "Time to calculate neighborhood: " <<neighElapsed.count() << "s" << endl;
+	vector<vector<NodeID>> embedding = CF(g, neighborhood,atoi(argv[3]));
+	auto embedEnd = std::chrono::system_clock::now();
+	auto embedElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(embedEnd - neighEnd);
 	//auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	//cout << "Number of cliques: " << embedding.size() << endl;
-	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
+	cout << "Number of cliques: " << embedding.size() << endl;
+	cout << "Time to calculate possible subgraph isomorphisms: " <<embedElapsed.count() << "s" << endl;
 	return 0;
 }
