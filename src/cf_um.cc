@@ -25,14 +25,15 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
-unordered_map<NodeID, set<NodeID>> GetNeigh(Graph &g){
-	unordered_map<NodeID, set<NodeID>> neighborhood;
-	set<NodeID> temp;
-	
+unordered_map<NodeID, vector<NodeID>> GetNeigh(Graph &g){
+	unordered_map<NodeID, vector<NodeID>> neighborhood;
+	vector<NodeID> temp;
+	temp.reserve(100);
+
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		for(NodeID node: g.out_neigh(u))
 		{
-			temp.insert(node);
+			temp.push_back(node);
 		}
 		neighborhood[u] = temp;
 		temp.clear();
@@ -41,7 +42,7 @@ unordered_map<NodeID, set<NodeID>> GetNeigh(Graph &g){
 	return neighborhood;
 }
 
-bool IsNeigh(set<NodeID> neighborhood, NodeID v) {
+bool IsNeighSet(set<NodeID> neighborhood, NodeID v) {
 	auto pos = neighborhood.find(v);
 
 	if(pos != neighborhood.end()){
@@ -52,7 +53,17 @@ bool IsNeigh(set<NodeID> neighborhood, NodeID v) {
 	}
 }
 
-bool Connected(set<NodeID> neighborhood, vector<NodeID> vec, NodeID extend){
+bool IsNeighVec(vector<NodeID> neighborhood, NodeID v) {
+	for(NodeID i: neighborhood){
+		if(i == v){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool Connected(vector<NodeID> neighborhood, vector<NodeID> vec, NodeID extend){
 	int count = 0;
 	for(NodeID i: vec){
 		if(i == extend){
@@ -60,7 +71,7 @@ bool Connected(set<NodeID> neighborhood, vector<NodeID> vec, NodeID extend){
 			continue;
 		}
 
-		if(IsNeigh(neighborhood, i)){
+		if(IsNeighVec(neighborhood, i)){
 			count++;
 		}
 	}
@@ -72,7 +83,7 @@ bool Connected(set<NodeID> neighborhood, vector<NodeID> vec, NodeID extend){
 	}
 }
 
-vector<vector<NodeID>> CF(const Graph &g, unordered_map<NodeID, set<NodeID>> neighborhood ,int size){
+vector<vector<NodeID>> CF(const Graph &g, unordered_map<NodeID, vector<NodeID>> neighborhood ,int size){
 	vector<vector<NodeID>> cliques;
 
 	#pragma omp parallel for
@@ -128,7 +139,7 @@ int main(int argc, char* argv[]){
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();
 	auto start = std::chrono::system_clock::now();
-	unordered_map<NodeID, set<NodeID>> neighborhood = GetNeigh(g);
+	unordered_map<NodeID, vector<NodeID>> neighborhood = GetNeigh(g);
 	auto neighEnd = std::chrono::system_clock::now();
 	auto neighElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(neighEnd - start);
 	cout << "Time to calculate neighborhood: " <<neighElapsed.count() << "s" << endl;
