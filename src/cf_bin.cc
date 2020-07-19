@@ -77,7 +77,7 @@ bool BinNeigh(vector<NodeID> list, NodeID target){
 	return false;
 }
 
-bool BinConnected(vector<vector<NodeID>> neighborhood, vector<NodeID> vec, NodeID extend, NodeID candidate){
+bool BinConnected(vector<NodeID> neighborhood, vector<NodeID> vec, NodeID extend){
 	int count = 0;
 	for(NodeID i: vec){
 		if(i == extend){
@@ -85,39 +85,7 @@ bool BinConnected(vector<vector<NodeID>> neighborhood, vector<NodeID> vec, NodeI
 			continue;
 		}
 
-		if(BinNeigh(neighborhood[i], candidate)){
-			count++;
-		}
-	}
-	if(count == vec.size()){
-		return true;
-	}
-	else{
-		return false;
-	}
-}
-
-//Linear search for connectedness
-bool LinNeigh(const Graph &g, NodeID u, NodeID v) {
-	for(NodeID node: g.out_neigh(u))
-	{
-		if ( node == v)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool LinConnected(const Graph &g, vector<NodeID> vec, NodeID extend, NodeID candidate){
-	int count = 0;
-	for(NodeID i: vec){
-		if(i == extend){
-			count++;
-			continue;
-		}
-
-		if(LinNeigh(g, i, candidate)){
+		if(BinNeigh(neighborhood, i)){
 			count++;
 		}
 	}
@@ -140,27 +108,7 @@ bool InSet(set<NodeID> outNeigh, NodeID target){
 	}
 }
 
-bool Connected(vector<set<NodeID>> neighborhood, vector<NodeID> vec, NodeID extend, NodeID candidate){
-	int count = 0;
-	for(NodeID i: vec){
-		if(i == extend){
-			count++;
-			continue;
-		}
-
-		if(InSet(neighborhood[i], candidate)){
-			count++;
-		}
-	}
-	if(count == vec.size()){
-		return true;
-	}
-	else{
-		return false;
-	}
-}
-
-vector<vector<NodeID>> CF(const Graph &g, vector<set<NodeID>> neighborhood ,int size){
+vector<vector<NodeID>> CF(const Graph &g, vector<vector<NodeID>> neighborhood ,int size){
 	vector<vector<NodeID>> cliques;
 
 	#pragma omp parallel for
@@ -189,9 +137,7 @@ vector<vector<NodeID>> CF(const Graph &g, vector<set<NodeID>> neighborhood ,int 
 					continue;
 				}
 				
-				//if(LinConnected(g, temp, j, k)){
-				//if(BinConnected(neighborhood, temp, j, k)){
-				if(Connected(neighborhood, temp, j, k)){
+				if(BinConnected(neighborhood[k], temp, j)){
 					temp.push_back(k);
 					
 					if(temp.size() == size){
@@ -218,7 +164,7 @@ int main(int argc, char* argv[]){
 	Graph g = b.MakeGraph();
 	//g.PrintTopology();
 	auto start = std::chrono::system_clock::now();
-	vector<set<NodeID>> neighborhood = GetNeighSet(g);
+	vector<vector<NodeID>> neighborhood = GetNeighVec(g);
 	auto neighEnd = std::chrono::system_clock::now();
 	auto neighElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(neighEnd - start);
 	cout << "Time to calculate neighborhood: " <<neighElapsed.count() << "s" << endl;
