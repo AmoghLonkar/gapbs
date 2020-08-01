@@ -34,7 +34,7 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
-void PrintInfo(NewGraph graph, NodeID i){
+void PrintInfo(NewGraph &graph, NodeID i){
 	cout << "NodeID: " << graph.nodes[i].id << endl;
 	cout << "Out Degree: " << (graph.nodes[i]).outDegree << endl;
 	PrintVec((graph.nodes[i]).neighbors);
@@ -65,25 +65,33 @@ NewGraph GetInfo(Graph &g, int size){
 	return graphInfo;
 }
 
-vector<int> InitLabels(Graph &g, int k){
-	vector<int> labels;
-	labels.reserve(g.num_nodes());
-	for(int i = 0; i < g.num_nodes(); i++){
-		labels[i] = k;
-	}
-	
-	return labels;
+void UpdateLabels(Graph &g, NodeID u, vector<int> *labels){
+        for(NodeID node: g.out_neigh(u)){
+                labels->at(node)--;
+        }
 }
 
-NewGraph InducedGraph(NewGraph graph, NodeID vertex){
+NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
 	NewGraph subgraph;
 	
 	for(NodeID node: (graph.nodes[vertex]).neighbors){
 		(subgraph.nodes).push_back(graph.nodes[node]);
+
+		//Updating label
+		labels->at(graph.nodes[node].id)--;
 	}
 
 	return subgraph;	
 }
+
+void ComputeDegree(NewGraph &graph){
+		
+}
+
+void ReorderNeigh(NewGraph &graph, vector<int> *labels){
+	
+}
+
 
 int main(int argc, char* argv[]){
 	CLBase cli(argc, argv, "subgraph isomorphism");
@@ -94,13 +102,23 @@ int main(int argc, char* argv[]){
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	
+	int k = atoi(argv[3]);
+
 	auto start = std::chrono::system_clock::now();
-	NewGraph graph = GetInfo(g, atoi(argv[3]));
+	NewGraph graph = GetInfo(g, k);
 	auto end = std::chrono::system_clock::now();
+
+	//Initialize Labels	
+        vector<int> *labels = new vector<int>;
+
+        labels->reserve(g.num_nodes());
+        for(int i = 0; i < g.num_nodes(); i++){
+                labels->push_back(k);
+        }
 	
 	cout << "Checking induced subgraph: " << endl;
 	
-	NewGraph induced = InducedGraph(graph, 0);	
+	NewGraph induced = InducedGraph(graph, 0, labels);	
 	for(int i = 0; i < induced.nodes.size(); i++){
 		PrintInfo(induced, i);
 	}
