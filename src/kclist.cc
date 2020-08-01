@@ -71,21 +71,34 @@ void UpdateLabels(Graph &g, NodeID u, vector<int> *labels){
         }
 }
 
+vector<NodeID> Intersection(vector<NodeID> &v1, vector<NodeID> &v2){
+	vector<NodeID> intersect(v1.size() + v2.size());
+	intersect.reserve(max(v1.size(), v2.size()));	
+	
+	auto it = set_intersection(v1.begin(),
+                          v1.end(),
+                          v2.begin(),
+                          v2.end(),
+                          intersect.begin());
+	
+	
+	intersect.resize(it - intersect.begin());
+	return intersect;
+}
+
 NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
 	NewGraph subgraph;
 	
 	for(NodeID node: (graph.nodes[vertex]).neighbors){
 		(subgraph.nodes).push_back(graph.nodes[node]);
-
+		
+		(subgraph.nodes.back()).neighbors = Intersection((subgraph.nodes.back()).neighbors, (graph.nodes[vertex]).neighbors);
+		(subgraph.nodes.back()).outDegree = (subgraph.nodes.back().neighbors).size();	
 		//Updating label
 		labels->at(graph.nodes[node].id)--;
-	}
+	}	
 
 	return subgraph;	
-}
-
-void ComputeDegree(NewGraph &graph){
-		
 }
 
 void ReorderNeigh(NewGraph &graph, vector<int> *labels){
