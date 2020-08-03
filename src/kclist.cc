@@ -34,6 +34,14 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
+void PrintInfo(NewGraph &graph){
+	for(int i = 0; i < graph.nodes.size(); i++){
+		cout << "NodeID: " << graph.nodes[i].id << endl;
+		cout << "Out Degree: " << (graph.nodes[i]).outDegree << endl;
+		PrintVec((graph.nodes[i]).neighbors);
+	}
+}
+
 void PrintInfo(NewGraph &graph, NodeID i){
 	cout << "NodeID: " << graph.nodes[i].id << endl;
 	cout << "Out Degree: " << (graph.nodes[i]).outDegree << endl;
@@ -65,9 +73,9 @@ NewGraph GetInfo(Graph &g, int size){
 	return graphInfo;
 }
 
-void UpdateLabels(Graph &g, NodeID u, vector<int> *labels){
-        for(NodeID node: g.out_neigh(u)){
-                labels->at(node)--;
+void ResetLabels(NewGraph &g, vector<int> *labels, int k){
+        for(NodeInfo node: g.nodes){
+                labels->at(node.id) = k;
         }
 }
 
@@ -101,10 +109,34 @@ NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
 	return subgraph;	
 }
 
-void ReorderNeigh(NewGraph &graph, vector<int> *labels){
+void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *count, int k){
 	
-}
+	int l = labels->at(clique->back());
 
+	if (l == 2){
+		for(int i = 0; i < graph.nodes.size(); i++){
+			*count += graph.nodes[i].neighbors.size();
+			/*
+			for(NodeID node: graph.nodes[i].neighbors){
+				*count++;
+				cout << "Here" << endl;
+				clique->clear();
+			}*/
+		}
+		ResetLabels(graph, labels, k);
+		clique->clear();
+		return;
+	}
+	
+
+		
+	NewGraph subgraph = InducedGraph(graph, clique->back(), labels);
+	if(subgraph.nodes.empty()){
+		return;
+	}
+	clique->push_back(subgraph.nodes.front().id);	
+	Listing(labels, subgraph, clique, count, k);
+}
 
 int main(int argc, char* argv[]){
 	CLBase cli(argc, argv, "subgraph isomorphism");
@@ -120,7 +152,10 @@ int main(int argc, char* argv[]){
 	auto start = std::chrono::system_clock::now();
 	NewGraph graph = GetInfo(g, k);
 	auto end = std::chrono::system_clock::now();
-
+	
+	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	cout << "Time to create graph struct: " << elapsed.count() << endl; 
+	
 	//Initialize Labels	
         vector<int> *labels = new vector<int>;
 
@@ -129,14 +164,21 @@ int main(int argc, char* argv[]){
                 labels->push_back(k);
         }
 	
-	cout << "Checking induced subgraph: " << endl;
+	int *count = new int;
+	*count = 0;
+
+	vector<NodeID> *clique = new vector<NodeID>;
+	clique->reserve(k);
 	
-	NewGraph induced = InducedGraph(graph, 0, labels);	
-	for(int i = 0; i < induced.nodes.size(); i++){
-		PrintInfo(induced, i);
+	start = std::chrono::system_clock::now();
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		clique->push_back(u);
+		Listing(labels, graph, clique, count, k);
 	}
+	end = std::chrono::system_clock::now();
+	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
-	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	cout << "Number of cliques: " << *count << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
