@@ -34,6 +34,7 @@ void PrintVec(vector<NodeID> vec)
 	cout << endl;
 }
 
+//Print info for all nodes in the graph
 void PrintInfo(NewGraph &graph){
 	for(int i = 0; i < graph.nodes.size(); i++){
 		cout << "NodeID: " << graph.nodes[i].id << endl;
@@ -42,12 +43,14 @@ void PrintInfo(NewGraph &graph){
 	}
 }
 
+//Print info for specified vertex
 void PrintInfo(NewGraph &graph, NodeID i){
 	cout << "NodeID: " << graph.nodes[i].id << endl;
 	cout << "Out Degree: " << (graph.nodes[i]).outDegree << endl;
 	PrintVec((graph.nodes[i]).neighbors);
 }
 
+//Convert GAPBS graph into NewGraph object 
 NewGraph GetInfo(Graph &g, int size){
 	NewGraph graphInfo;
 	(graphInfo.nodes).reserve(g.num_nodes());
@@ -73,15 +76,16 @@ NewGraph GetInfo(Graph &g, int size){
 	return graphInfo;
 }
 
+//Reset labels to k after finishing calculation
 void ResetLabels(NewGraph &g, vector<int> *labels, int k){
         for(NodeInfo node: g.nodes){
                 labels->at(node.id) = k;
         }
 }
 
+//Getting edges in the vertex-induced subgraph
 vector<NodeID> Intersection(vector<NodeID> &v1, vector<NodeID> &v2){
 	vector<NodeID> intersect(v1.size() + v2.size());
-	intersect.reserve(max(v1.size(), v2.size()));	
 	
 	auto it = set_intersection(v1.begin(),
                           v1.end(),
@@ -94,6 +98,7 @@ vector<NodeID> Intersection(vector<NodeID> &v1, vector<NodeID> &v2){
 	return intersect;
 }
 
+//Generating vertex induced subgraph
 NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
 	NewGraph subgraph;
 	
@@ -109,12 +114,17 @@ NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
 	return subgraph;	
 }
 
+//Recursive function to count cliques
 void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *count, int k){
 	
+	//Set label
 	int l = labels->at(clique->back());
-
+	
+	//Last level of recursion
 	if (l == 2){
 		for(int i = 0; i < graph.nodes.size(); i++){
+			
+			//Increment count based on the number of edges in the final level subgraph
 			*count += graph.nodes[i].neighbors.size();
 			/*
 			for(NodeID node: graph.nodes[i].neighbors){
@@ -129,11 +139,14 @@ void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *
 	}
 	
 
-		
+	//Generate vertex induced subgraph	
 	NewGraph subgraph = InducedGraph(graph, clique->back(), labels);
+	
+	//No out neighbors
 	if(subgraph.nodes.empty()){
 		return;
 	}
+	//Add current vertex to candidate clique
 	clique->push_back(subgraph.nodes.front().id);	
 	Listing(labels, subgraph, clique, count, k);
 }
