@@ -170,6 +170,7 @@ void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *
 	
 	//Not enough out neighbors
 	if(subgraph.nodes.empty()){
+		clique->clear();
 		return;
 	}
 	//Add current vertex to candidate clique
