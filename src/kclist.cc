@@ -114,6 +114,25 @@ NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
 	return subgraph;	
 }
 
+NewGraph InducedGraph(NewGraph &graph, vector<int> *labels){
+	NewGraph subgraph;
+	int index;
+
+	for(NodeInfo node: graph.nodes){
+		for(NodeID neighbor: graph.nodes[0].neighbors){
+			if(neighbor == node.id){
+				subgraph.nodes.push_back(node);
+				(subgraph.nodes.back()).neighbors = Intersection((subgraph.nodes.back()).neighbors, (graph.nodes.front()).neighbors);
+				(subgraph.nodes.back()).outDegree = (subgraph.nodes.back().neighbors).size();	
+				//Updating label
+				labels->at(node.id)--;
+			}
+		}	
+	}	
+
+	return subgraph;	
+}
+
 //Recursive function to count cliques
 void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *count, int k){
 	
@@ -133,16 +152,23 @@ void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *
 				clique->clear();
 			}*/
 		}
-		ResetLabels(graph, labels, k);
 		clique->clear();
+		
 		return;
 	}
 	
 
 	//Generate vertex induced subgraph	
-	NewGraph subgraph = InducedGraph(graph, clique->back(), labels);
+	NewGraph subgraph;
+       
+	if(l == k){	
+		subgraph = InducedGraph(graph, clique->at(0),labels);
+	}
+	else{
+		subgraph = InducedGraph(graph, labels); 
+	}
 	
-	//No out neighbors
+	//Not enough out neighbors
 	if(subgraph.nodes.empty()){
 		return;
 	}
@@ -182,11 +208,13 @@ int main(int argc, char* argv[]){
 
 	vector<NodeID> *clique = new vector<NodeID>;
 	clique->reserve(k);
-	
+
 	start = std::chrono::system_clock::now();
 	for(NodeID u = 0; u < g.num_nodes(); u++){
+		
 		clique->push_back(u);
 		Listing(labels, graph, clique, count, k);
+		ResetLabels(graph, labels, k);
 	}
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
