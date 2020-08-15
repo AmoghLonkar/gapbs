@@ -128,7 +128,7 @@ class BuilderBase {
     prefix[degrees.size()] = bulk_prefix[num_blocks];
     return prefix;
   }
-
+  
   // Removes self-loops and redundant edges
   // Side effect: neighbor IDs will be sorted
   void SquishCSR(const CSRGraph<NodeID_, DestID_, invert> &g, bool transpose,
@@ -280,6 +280,32 @@ class BuilderBase {
     PrintTime("Relabel", t.Seconds());
     return CSRGraph<NodeID_, DestID_, invert>(g.num_nodes(), index, neighs);
   }
+
+  CSRGraph<NodeID_, DestID_, invert> MakeDag(
+	        const CSRGraph<NodeID_, DestID_, invert> &g) {
+  	EdgeList el;
+
+	for(NodeID_ m = 0; m < g.num_nodes(); m++){
+		for(NodeID_ n: g.out_neigh(m)){
+			if(g.out_degree(m) > g.out_degree(n)){
+				el.push_back(Edge(n, m));
+			}
+			else if(g.out_degree(m) == g.out_degree(n) && m > n){
+				continue;
+			}
+			else{
+				el.push_back(Edge(m, n));
+			}
+		}
+	}
+
+	CSRGraph<NodeID_, DestID_, invert> dag;
+	dag = MakeGraphFromEL(el);
+	return SquishGraph(dag);
+  }	  
+
+
+
 };
 
 #endif  // BUILDER_H_
