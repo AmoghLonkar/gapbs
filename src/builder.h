@@ -10,6 +10,7 @@
 #include <functional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "command_line.h"
 #include "generator.h"
@@ -285,16 +286,16 @@ class BuilderBase {
 	        const CSRGraph<NodeID_, DestID_, invert> &g) {
   	EdgeList el;
 
-	for(NodeID_ m = 0; m < g.num_nodes(); m++){
-		for(NodeID_ n: g.out_neigh(m)){
-			if(g.out_degree(m) > g.out_degree(n)){
-				el.push_back(Edge(n, m));
+	for(NodeID_ u = 0; u < g.num_nodes(); u++){
+		for(NodeID_ v: g.out_neigh(u)){
+			if(g.out_degree(u) > g.out_degree(v)){
+				el.push_back(Edge(v, u));
 			}
-			else if(g.out_degree(m) == g.out_degree(n) && m > n){
+			else if(g.out_degree(u) == g.out_degree(v) && u > v){
 				continue;
 			}
 			else{
-				el.push_back(Edge(m, n));
+				el.push_back(Edge(u, v));
 			}
 		}
 	}
@@ -305,6 +306,28 @@ class BuilderBase {
   }	  
 
 
+  CSRGraph<NodeID_, DestID_, invert> InducedSubgraph(
+	        const CSRGraph<NodeID_, DestID_, invert> &g, NodeID_ vertex) {
+  	EdgeList el;
+	
+	for(NodeID_ n: g.out_neigh(vertex)){
+		std::vector<NodeID_> intersection(g.out_degree(vertex) + g.out_degree(n));		
+		auto new_end = std::set_intersection(g.out_neigh(vertex).begin(),
+						     g.out_neigh(vertex).end(),
+		                                     g.out_neigh(n).begin(),
+						     g.out_neigh(n).end(),				
+						     intersection.begin());
+		intersection.resize(new_end - intersection.begin());
+			
+		for(NodeID_ common: intersection){
+			el.push_back(Edge(n, common));
+		}
+	}
+
+	CSRGraph<NodeID_, DestID_, invert> induced;
+	induced = MakeGraphFromEL(el);
+	return SquishGraph(induced);
+  }	  
 
 };
 
