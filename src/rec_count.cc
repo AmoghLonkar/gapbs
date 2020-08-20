@@ -46,6 +46,20 @@ vector<NodeID> BitMapIntersection(vector<NodeID> I, Graph &g, NodeID v){
 	return I_prime;	
 }
 
+vector<NodeID> Intersection(vector<NodeID> &v1, Graph &g, NodeID v){
+	vector<NodeID> intersect(v1.size() + g.out_degree(v));
+	
+	auto it = set_intersection(v1.begin(),
+	                           v1.end(),
+	                           g.out_neigh(v).begin(),
+	                           g.out_neigh(v).end(),
+	                           intersect.begin());
+				
+				
+	intersect.resize(it - intersect.begin());
+	return intersect;
+}
+
 int RecCount(Builder b, Graph &g, vector<NodeID> I, int l){
 	if(l == 1){
 		return I.size();
@@ -55,11 +69,12 @@ int RecCount(Builder b, Graph &g, vector<NodeID> I, int l){
 
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		vector<NodeID> I_prime;
-		I_prime = BitMapIntersection(I, g, u);
+		//I_prime = BitMapIntersection(I, g, u);
+		I_prime = Intersection(I, g, u);
 		
 		Graph subgraph = b.InducedSubgraph(g, u);
-		int t_prime = RecCount(b, subgraph, I_prime, l -1);
-		T[u] = t_prime;	
+		int t_prime = RecCount(b, subgraph, I_prime, l - 1);
+		T[u] = t_prime;
 	}
 
 	int t = accumulate(T.begin(), T.end(), 0); 
