@@ -16,22 +16,6 @@
 #include "platform_atomics.h"
 
 using namespace std;
-#define SIZE 100000
-
-vector<NodeID> Intersection(vector<NodeID> &v1, Graph &g, NodeID v){
-	vector<NodeID> intersect(v1.size() + g.out_degree(v));
-	
-	auto it = set_intersection(v1.begin(),
-	                           v1.end(),
-	                           g.out_neigh(v).begin(),
-	                           g.out_neigh(v).end(),
-	                           intersect.begin());
-				
-				
-	intersect.resize(it - intersect.begin());
-	return intersect;
-}
-
 
 unordered_map<NodeID, vector<NodeID>> InitGraph(Graph &g){
 	unordered_map<NodeID, vector<NodeID>> graph;
@@ -49,14 +33,33 @@ unordered_map<NodeID, vector<NodeID>> InitGraph(Graph &g){
 
 	return graph;
 }
-/*
-unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vector<NodeID> &graph>, NodeID vertex){
+
+vector<NodeID> Intersection(vector<NodeID> v1, vector<NodeID> v2){
+	vector<NodeID> intersect(v1.size() + v2.size());
+		
+	auto it = set_intersection(v1.begin(),
+			           v1.end(),
+				   v2.begin(),
+				   v2.end(),
+				   intersect.begin());
+				
+	intersect.resize(it - intersect.begin());
+	return intersect;
+}
+
+unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vector<NodeID>> &graph, NodeID vertex){
 	unordered_map<NodeID, vector<NodeID>> subgraph;
+	
+	vector<NodeID> nodes = graph.at(vertex);
+	for(NodeID node: nodes){
+		vector<NodeID> neighbors = Intersection(graph.at(node), graph.at(vertex));
+		subgraph[node] = neighbors;
+	}	
 	
 	return subgraph;
 }
-*/
 
+/*
 int RecCount(Builder b, Graph &g, vector<NodeID> I, int l){
 	if(l == 1){
 		return I.size();
@@ -77,7 +80,7 @@ int RecCount(Builder b, Graph &g, vector<NodeID> I, int l){
 	int t = accumulate(T.begin(), T.end(), 0); 
 	return t;
 }
-
+*/
 int main(int argc, char* argv[]){
 	CLBase cli(argc, argv, "subgraph isomorphism");
 	if (!cli.ParseArgs()){
@@ -100,6 +103,7 @@ int main(int argc, char* argv[]){
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);	
 	
 	cout << "Time to create graph data structure: " << elapsed.count() << endl;
+	
 	/*
 	start = std::chrono::system_clock::now();
 	int k = atoi(argv[3]);
