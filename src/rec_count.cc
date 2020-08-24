@@ -59,28 +59,26 @@ unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vect
 	return subgraph;
 }
 
-/*
-int RecCount(Builder b, Graph &g, vector<NodeID> I, int l){
+int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
 	if(l == 1){
 		return I.size();
 	}
 
-	vector<int> T(g.num_nodes());
+	vector<int> T(I.size());
 
-	for(NodeID u = 0; u < g.num_nodes(); u++){
+	for(NodeID u = 0; u < I.size(); u++){
 		vector<NodeID> I_prime;
-		//I_prime = BitMapIntersection(I, g, u);
-		I_prime = Intersection(I, g, u);
+		I_prime = Intersection(I, g.at(u));
 		
-		Graph subgraph = b.InducedSubgraph(g, u);
-		int t_prime = RecCount(b, subgraph, I_prime, l - 1);
+		unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, u);
+		int t_prime = RecCount(subgraph, I_prime, l - 1);
 		T[u] = t_prime;
 	}
 
 	int t = accumulate(T.begin(), T.end(), 0); 
 	return t;
 }
-*/
+
 int main(int argc, char* argv[]){
 	CLBase cli(argc, argv, "subgraph isomorphism");
 	if (!cli.ParseArgs()){
@@ -104,18 +102,17 @@ int main(int argc, char* argv[]){
 	
 	cout << "Time to create graph data structure: " << elapsed.count() << endl;
 	
-	/*
 	start = std::chrono::system_clock::now();
 	int k = atoi(argv[3]);
 	vector<NodeID> V(dag.num_nodes());
 	iota(std::begin(V), std::end(V), 0);
 	
-	int count = RecCount(b, dag, V, k);
+	int count = RecCount(graph, V, k);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);	
 	
 	cout << "Number of cliques: " << count << endl;
 	cout << "Time to count cliques: " << elapsed.count() << endl; 
-	*/
+	
 	return 0;
 }	
