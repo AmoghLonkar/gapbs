@@ -18,34 +18,6 @@
 using namespace std;
 #define SIZE 100000
 
-//Will need to relabel
-vector<NodeID> BitMapIntersection(vector<NodeID> I, Graph &g, NodeID v){
-	
-	bitset<SIZE> neighborhood;
-	int y;
-	for(NodeID u: g.out_neigh(v)){
-		y = (int) u;
-		neighborhood.set(y);
-	}
-	
-	bitset<SIZE> bits_I;
-	for(NodeID u: I){
-		y = (int) u;
-		bits_I.set(y);
-	}
-
-	bitset<SIZE> intersection = neighborhood & bits_I;
-
-	vector<NodeID> I_prime;
-	for(int i = 0; i < intersection.size(); i++){
-		if(intersection[i] == 1){
-			I_prime.push_back(i);
-		}
-	}
-
-	return I_prime;	
-}
-
 vector<NodeID> Intersection(vector<NodeID> &v1, Graph &g, NodeID v){
 	vector<NodeID> intersect(v1.size() + g.out_degree(v));
 	
@@ -59,6 +31,31 @@ vector<NodeID> Intersection(vector<NodeID> &v1, Graph &g, NodeID v){
 	intersect.resize(it - intersect.begin());
 	return intersect;
 }
+
+
+unordered_map<NodeID, vector<NodeID>> InitGraph(Graph &g){
+	unordered_map<NodeID, vector<NodeID>> graph;
+	
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		vector<NodeID> neighbors;
+		neighbors.reserve(g.out_degree(u));
+		
+		for(NodeID v: g.out_neigh(u)){
+			neighbors.push_back(v);
+		}
+		
+		graph[u] = neighbors;	
+	}
+
+	return graph;
+}
+/*
+unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vector<NodeID> &graph>, NodeID vertex){
+	unordered_map<NodeID, vector<NodeID>> subgraph;
+	
+	return subgraph;
+}
+*/
 
 int RecCount(Builder b, Graph &g, vector<NodeID> I, int l){
 	if(l == 1){
@@ -97,7 +94,13 @@ int main(int argc, char* argv[]){
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create DAG: " << elapsed.count() << endl; 
 	
-
+	start = std::chrono::system_clock::now();
+	unordered_map<NodeID, vector<NodeID>> graph = InitGraph(dag);	
+	end = std::chrono::system_clock::now();
+	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);	
+	
+	cout << "Time to create graph data structure: " << elapsed.count() << endl;
+	/*
 	start = std::chrono::system_clock::now();
 	int k = atoi(argv[3]);
 	vector<NodeID> V(dag.num_nodes());
@@ -109,6 +112,6 @@ int main(int argc, char* argv[]){
 	
 	cout << "Number of cliques: " << count << endl;
 	cout << "Time to count cliques: " << elapsed.count() << endl; 
-
+	*/
 	return 0;
 }	
