@@ -49,7 +49,7 @@ vector<NodeID> Intersection(vector<NodeID> v1, vector<NodeID> v2){
 
 unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vector<NodeID>> &graph, NodeID vertex){
 	unordered_map<NodeID, vector<NodeID>> subgraph;
-	
+
 	vector<NodeID> nodes = graph.at(vertex);
 	for(NodeID node: nodes){
 		vector<NodeID> neighbors = Intersection(graph.at(node), graph.at(vertex));
@@ -64,13 +64,13 @@ int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
 		return I.size();
 	}
 
-	vector<int> T(I.size());
+	vector<int> T(g.size());
 
-	for(NodeID u = 0; u < I.size(); u++){
-		vector<NodeID> I_prime;
-		I_prime = Intersection(I, g.at(u));
+	for(NodeID u = 0; u < g.size(); u++){
+		vector<NodeID> neighbors = g.at(I[u]);
+		vector<NodeID> I_prime = Intersection(I, neighbors);
 		
-		unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, u);
+		unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, I[u]);
 		int t_prime = RecCount(subgraph, I_prime, l - 1);
 		T[u] = t_prime;
 	}
