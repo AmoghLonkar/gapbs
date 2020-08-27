@@ -69,19 +69,22 @@ int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
 	for(NodeID u = 0; u < g.size(); u++){
 		vector<NodeID> neighbors = g.at(I[u]);
 		vector<NodeID> I_prime = neighbors;
-	
-		if(l == 2){
-			int t_prime = RecCount(g, I_prime, l-1);
+		
+		int t_prime = 0;	
+		if(l != 2){
+			unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, I[u]);
+			t_prime = RecCount(subgraph, I_prime, l - 1);
 		}	
-
-		unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, I[u]);
-		int t_prime = RecCount(subgraph, I_prime, l - 1);
+		else{
+			t_prime = RecCount(g, I_prime, l - 1);
+		}
 		T[u] = t_prime;
 	}
 
 	int t = accumulate(T.begin(), T.end(), 0); 
 	return t;
 }
+
 
 int main(int argc, char* argv[]){
 	CLBase cli(argc, argv, "subgraph isomorphism");
