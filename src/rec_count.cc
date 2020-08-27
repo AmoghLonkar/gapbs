@@ -69,7 +69,11 @@ int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
 	for(NodeID u = 0; u < g.size(); u++){
 		vector<NodeID> neighbors = g.at(I[u]);
 		vector<NodeID> I_prime = neighbors;
-		
+	
+		if(l == 2){
+			int t_prime = RecCount(g, I_prime, l-1);
+		}	
+
 		unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, I[u]);
 		int t_prime = RecCount(subgraph, I_prime, l - 1);
 		T[u] = t_prime;
