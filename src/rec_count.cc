@@ -47,13 +47,35 @@ vector<NodeID> Intersection(vector<NodeID> v1, vector<NodeID> v2){
 	return intersect;
 }
 
+vector<NodeID> MyIntersection(vector<NodeID> v1, vector<NodeID> v2){
+
+	auto first1 = v1.begin();
+	auto last1 = v1.end();
+	auto first2 = v2.begin();
+	auto last2 = v2.end();
+
+	vector<NodeID> intersect;
+	intersect.reserve(v1.size() + v2.size());
+
+	while (first1!=last1 && first2!=last2){
+      		if (*first1<*first2) ++first1;
+    		else if (*first2<*first1) ++first2;
+    		else {
+	      		intersect.push_back(*first1);
+	        	++first1; ++first2;
+	        }
+  	}
+
+  	return intersect;
+}
+
 unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vector<NodeID>> &graph, NodeID vertex){
 	unordered_map<NodeID, vector<NodeID>> subgraph;
 
 	vector<NodeID> nodes = graph.at(vertex);
 	for(NodeID node: nodes){
-		vector<NodeID> neighbors = Intersection(graph.at(node), graph.at(vertex));
-		subgraph[node] = neighbors;
+		subgraph[node] = Intersection(graph.at(node), graph.at(vertex));
+		//subgraph[node] = MyIntersection(graph.at(node), graph.at(vertex));
 	}	
 	
 	return subgraph;
@@ -67,13 +89,17 @@ int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
 	vector<int> T(g.size());
 
 	for(NodeID u = 0; u < g.size(); u++){
-		vector<NodeID> neighbors = g.at(I[u]);
-		vector<NodeID> I_prime = neighbors;
+		vector<NodeID> I_prime = g.at(I[u]);
 		
 		int t_prime = 0;	
-		if(l != 2){
+		if(l != 2 && I_prime.size() >= l - 1){
+		//if(l != 2){
 			unordered_map<NodeID, vector<NodeID>> subgraph = InducedSubgraph(g, I[u]);
 			t_prime = RecCount(subgraph, I_prime, l - 1);
+		}
+		
+		else if(l != 2 && I_prime.size() < l - 1){
+			t_prime = 0;
 		}	
 		else{
 			t_prime = RecCount(g, I_prime, l - 1);
