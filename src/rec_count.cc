@@ -82,10 +82,6 @@ unordered_map<NodeID, vector<NodeID>> InducedSubgraph(unordered_map<NodeID, vect
 }
 
 int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
-	if(l == 1){
-		return I.size();
-	}
-
 	vector<int> T(g.size());
 
 	for(NodeID u = 0; u < g.size(); u++){
@@ -98,11 +94,12 @@ int RecCount(unordered_map<NodeID, vector<NodeID>> &g, vector<NodeID> I, int l){
 			t_prime = RecCount(subgraph, I_prime, l - 1);
 		}
 		
-		else if(l != 2 && I_prime.size() < l - 1){
+		else if(l !=2 && I_prime.size() < l - 1){
 			t_prime = 0;
-		}	
+		}
+		
 		else{
-			t_prime = RecCount(g, I_prime, l - 1);
+			t_prime = I_prime.size();
 		}
 		T[u] = t_prime;
 	}
@@ -120,11 +117,11 @@ int main(int argc, char* argv[]){
 
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-	
+		
 	auto start = std::chrono::system_clock::now();
 	Graph dag = b.MakeDag(g);
 	auto end = std::chrono::system_clock::now();
-
+	
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create DAG: " << elapsed.count() << endl; 
 	
