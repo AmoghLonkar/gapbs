@@ -66,7 +66,14 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	
 	// Building subgraph
 	for(int i = 0; i < g_i->ns[l-1]; i++){
-		
+		int node = g_i->sub[l-1][i];
+		// Looking out 
+		for(NodeID neighbor: g.out_neigh(node)){
+			// Node is present in the subgraph
+			if(g_i->lab[neighbor] == l-1){
+				g_i->d[l-1][neighbor]++;
+			}
+		}	
 	}	
 
 	Listing(g, g_i, l-1, n);
@@ -98,8 +105,12 @@ int main(int argc, char* argv[]){
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << endl; 
 	
+	start = std::chrono::system_clock::now();
 	int n = 0;
-	//Listing(dag, &graph_struct, k, &n);
+	Listing(dag, &graph_struct, k, &n);
+	end = std::chrono::system_clock::now();
+	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	
 	cout << "Number of cliques: " << n << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
