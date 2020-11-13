@@ -47,41 +47,46 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
 			(*n) += g_i->d[2][i];
-		}	
+		}
+		return;	
 	}
 	
 	// For each node in g_l
 	// Initializing vertex-induced subgraph
 	for(int i = 0; i < g_i->ns[l]; i++){
-		
 		g_i->ns[l-1] = 0;
+		g_i->sub[l-1][g_i->ns[l-1]++] = i; 
 		for(NodeID neighbor: g.out_neigh(i)){
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
-				g_i->sub[l-1][g_i->ns[l-1]++] = i;
+				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
 			}
 			
 		}	
-	}
-	
-	// Building subgraph
-	for(int i = 0; i < g_i->ns[l-1]; i++){
-		int node = g_i->sub[l-1][i];
-		// Looking out 
-		for(NodeID neighbor: g.out_neigh(node)){
-			// Node is present in the subgraph
-			if(g_i->lab[neighbor] == l-1){
-				g_i->d[l-1][neighbor]++;
+
+		if(g_i->ns[l-1] >= l){
+		
+			// Building subgraph
+			for(int j = 0; j < g_i->ns[l-1]; j++){
+				g_i->d[l-1][j] = 0;
+				int node = g_i->sub[l-1][j];
+				// Looking out 
+				for(NodeID neighbor: g.out_neigh(node)){
+					// Node is present in the subgraph
+					if(g_i->lab[neighbor] == l-1){
+						(g_i->d[l-1][j])++;
+					}
+				}	
+			}	
+		
+			Listing(g, g_i, l-1, n);
+
+			//Resetting labels	
+			for(int k = 0; k < g_i->ns[l-1]; k++){
+				int node = g_i->sub[l-1][k];
+				g_i->lab[node] = l;
 			}
-		}	
-	}	
-
-	Listing(g, g_i, l-1, n);
-
-	//Resetting labels	
-	for(int i = 0; i < g_i->ns[l-1]; i++){
-		int node = g_i->sub[l-1][i];
-		g_i->lab[node] = l;
+		}
 	}
 
 }
@@ -96,22 +101,20 @@ int main(int argc, char* argv[]){
 	Graph g = b.MakeGraph();
 	Graph dag = b.MakeDag(g);
 	int k = atoi(argv[3]);
-
 	Graph_Info graph_struct;
 	
 	auto start = std::chrono::system_clock::now();
 	Init(dag, &graph_struct, k);
 	auto end = std::chrono::system_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	auto elapsed = std::chrono::duration_cast<std::chrono::duration<int>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << endl; 
-	
 	start = std::chrono::system_clock::now();
 	int n = 0;
 	Listing(dag, &graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
-	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+	elapsed = std::chrono::duration_cast<std::chrono::duration<int>>(end - start);
 	
-	cout << "Number of cliques: " << n << endl;
+	//cout << "Number of cliques: " << n/k << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
