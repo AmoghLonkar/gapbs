@@ -45,10 +45,10 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 
 void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	/*
-	if(l == 2){
+	if(l == 3){
 		cout << "Subgraph: " << endl;
-		for(int u = 0; u < g_i->ns[2]; u++){
-			cout << "Node: " << g_i->sub[2][u] << ", Degree: " << g_i->d[2][u] << endl;
+		for(int u = 0; u < g_i->ns[3]; u++){
+			cout << "Node: " << g_i->sub[3][u] << ", Degree: " << g_i->d[3][u] << endl;
 		}
 	}	
 	*/
@@ -76,7 +76,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 			}
 			
 		}	
-	
+		
+		//Only proceed if there is potential for a clique
 		if(g_i->ns[l-1] >= l - 1){
 		//{
 			// Building subgraph
@@ -94,12 +95,12 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 			}	
 		
 			Listing(g, g_i, l-1, n);
-
-			//Resetting labels	
-			for(int k = 0; k < g_i->ns[l-1]; k++){
-				int node = g_i->sub[l-1][k];
-				g_i->lab[node] = l;
-			}
+		}
+		
+		//Resetting labels	
+		for(int k = 0; k < g_i->ns[l-1]; k++){
+			int node = g_i->sub[l-1][k];
+			g_i->lab[node] = l;
 		}
 	}
 
