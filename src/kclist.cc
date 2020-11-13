@@ -44,8 +44,17 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 }
 
 void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
+	/*
 	if(l == 2){
-		for(int i = 0; i < g_i->ns[2]; i++){
+		cout << "Subgraph: " << endl;
+		for(int u = 0; u < g_i->ns[2]; u++){
+			cout << "Node: " << g_i->sub[2][u] << ", Degree: " << g_i->d[2][u] << endl;
+		}
+	}	
+	*/
+
+	if(l == 2){
+		for(int i = 1; i < g_i->ns[2]; i++){
 			(*n) += g_i->d[2][i];
 		}
 		return;	
@@ -55,22 +64,27 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	// Initializing vertex-induced subgraph
 	for(int i = 0; i < g_i->ns[l]; i++){
 		g_i->ns[l-1] = 0;
-		g_i->sub[l-1][g_i->ns[l-1]++] = i; 
+		//Adding root node to subgraph
+		g_i->sub[l-1][g_i->ns[l-1]++] = i;
+
 		for(NodeID neighbor: g.out_neigh(i)){
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
+				
+				//Adding nodes to subgraph
 				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
 			}
 			
 		}	
-
-		if(g_i->ns[l-1] >= l){
-		
+	
+		if(g_i->ns[l-1] >= l - 1){
+		//{
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
 				g_i->d[l-1][j] = 0;
 				int node = g_i->sub[l-1][j];
-				// Looking out 
+
+				// Looking at edges between nodes 
 				for(NodeID neighbor: g.out_neigh(node)){
 					// Node is present in the subgraph
 					if(g_i->lab[neighbor] == l-1){
@@ -99,22 +113,24 @@ int main(int argc, char* argv[]){
 
 	Builder b(cli);
 	Graph g = b.MakeGraph();
+	auto start = std::chrono::system_clock::now();
+	
 	Graph dag = b.MakeDag(g);
 	int k = atoi(argv[3]);
 	Graph_Info graph_struct;
-	
-	auto start = std::chrono::system_clock::now();
 	Init(dag, &graph_struct, k);
+	
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<int>>(end - start);
-	cout << "Time to create graph struct: " << elapsed.count() << endl; 
+	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
+	
 	start = std::chrono::system_clock::now();
 	int n = 0;
 	Listing(dag, &graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<int>>(end - start);
 	
-	//cout << "Number of cliques: " << n/k << endl;
+	cout << "Number of cliques: " << n << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
