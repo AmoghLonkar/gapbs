@@ -44,17 +44,9 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 }
 
 void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
-	/*
-	if(l == 3){
-		cout << "Subgraph: " << endl;
-		for(int u = 0; u < g_i->ns[3]; u++){
-			cout << "Node: " << g_i->sub[3][u] << ", Degree: " << g_i->d[3][u] << endl;
-		}
-	}	
-	*/
 
 	if(l == 2){
-		for(int i = 1; i < g_i->ns[2]; i++){
+		for(int i = 0; i < g_i->ns[2]; i++){
 			(*n) += g_i->d[2][i];
 		}
 		return;	
@@ -65,7 +57,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	for(int i = 0; i < g_i->ns[l]; i++){
 		g_i->ns[l-1] = 0;
 		//Adding root node to subgraph
-		g_i->sub[l-1][g_i->ns[l-1]++] = i;
+		//g_i->sub[l-1][g_i->ns[l-1]++] = g_i->sub[l][i];
+		
 
 		for(NodeID neighbor: g.out_neigh(i)){
 			if(g_i->lab[neighbor] == l){
@@ -75,7 +68,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
 			}
 			
-		}	
+		}
 		
 		//Only proceed if there is potential for a clique
 		if(g_i->ns[l-1] >= l - 1){
@@ -91,9 +84,11 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 					if(g_i->lab[neighbor] == l-1){
 						(g_i->d[l-1][j])++;
 					}
-				}	
+				}
+
+			cout << "Node " << g_i->sub[l-1][j] << ", Degree: " << g_i->d[l-1][j] << endl;	
 			}	
-		
+			cout << "Next recursion level" << endl;	
 			Listing(g, g_i, l-1, n);
 		}
 		
