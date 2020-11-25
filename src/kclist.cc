@@ -15,167 +15,87 @@
 
 using namespace std;
 
-struct NodeInfo{
-	NodeID id;
-	int outDegree;
-	vector<NodeID> neighbors;
+struct Graph_Info{
+	vector<int> ns;
+	vector<vector<int>> d;
+	vector<int> lab;
+	vector<vector<int>> sub;
 };
 
-struct NewGraph{
-	vector<NodeInfo> nodes;
-};
-
-void PrintVec(vector<NodeID> vec)
-{
-	for(NodeID i : vec)
-	{
-		cout << i << " ";
+void Init(Graph &g, Graph_Info *g_i, int k){
+	vector<int> ns(k+1, 0);
+	ns[k] = g.num_nodes();
+	g_i->ns = ns;
+	
+	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
+	for(NodeID i = 0; i < g.num_nodes(); i++){
+		d[k][i] = g.out_degree(i);
 	}
-	cout << endl;
-}
+	g_i->d = d;
 
-//Print info for all nodes in the graph
-void PrintInfo(NewGraph &graph){
-	for(int i = 0; i < graph.nodes.size(); i++){
-		cout << "NodeID: " << graph.nodes[i].id << endl;
-		cout << "Out Degree: " << (graph.nodes[i]).outDegree << endl;
-		PrintVec((graph.nodes[i]).neighbors);
+	vector<int> lab(g.num_nodes(), k);
+	g_i->lab = lab;
+	
+	vector<vector<int>> sub(k+1, vector<int>(g.num_nodes(), 0));
+	for(NodeID i = 0; i < g.num_nodes(); i++){
+		sub[k][i] = i; 
 	}
+	g_i->sub = sub;	
 }
 
-//Print info for specified vertex
-void PrintInfo(NewGraph &graph, NodeID i){
-	cout << "NodeID: " << graph.nodes[i].id << endl;
-	cout << "Out Degree: " << (graph.nodes[i]).outDegree << endl;
-	PrintVec((graph.nodes[i]).neighbors);
-}
+void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 
-//Convert GAPBS graph into NewGraph object 
-NewGraph GetInfo(Graph &g, int size){
-	NewGraph graphInfo;
-	(graphInfo.nodes).reserve(g.num_nodes());
-
-	vector<NodeID> neighborhood;
-	neighborhood.reserve(100);
-
-	NodeInfo temp;
-
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		for(NodeID node: g.out_neigh(u)){
-			neighborhood.push_back(node);
+	if(l == 2){
+		for(int i = 0; i < g_i->ns[2]; i++){
+			(*n) += g_i->d[2][i];
 		}
-
-		temp.id = u;
-		temp.outDegree = g.out_degree(u);
-		temp.neighbors = neighborhood;
-		neighborhood.clear();
-
-		(graphInfo.nodes).push_back(temp);
-	}	
-
-	return graphInfo;
-}
-
-//Reset labels to k after finishing calculation
-void ResetLabels(NewGraph &g, vector<int> *labels, int k){
-        for(NodeInfo node: g.nodes){
-                labels->at(node.id) = k;
-        }
-}
-
-//Getting edges in the vertex-induced subgraph
-vector<NodeID> Intersection(vector<NodeID> &v1, vector<NodeID> &v2){
-	vector<NodeID> intersect(v1.size() + v2.size());
+		return;	
+	}
 	
-	auto it = set_intersection(v1.begin(),
-                          v1.end(),
-                          v2.begin(),
-                          v2.end(),
-                          intersect.begin());
-	
-	
-	intersect.resize(it - intersect.begin());
-	return intersect;
-}
+	// For each node in g_l
+	// Initializing vertex-induced subgraph
+	for(int i = 0; i < g_i->ns[l]; i++){
+		g_i->ns[l-1] = 0;
 
-//Generating vertex induced subgraph
-NewGraph InducedGraph(NewGraph &graph, NodeID vertex, vector<int> *labels){
-	NewGraph subgraph;
-	
-	for(NodeID node: (graph.nodes[vertex]).neighbors){
-		(subgraph.nodes).push_back(graph.nodes[node]);
-		
-		(subgraph.nodes.back()).neighbors = Intersection((subgraph.nodes.back()).neighbors, (graph.nodes[vertex]).neighbors);
-		(subgraph.nodes.back()).outDegree = (subgraph.nodes.back().neighbors).size();	
-		//Updating label
-		labels->at(graph.nodes[node].id)--;
-	}	
-
-	return subgraph;	
-}
-
-NewGraph InducedGraph(NewGraph &graph, vector<int> *labels){
-	NewGraph subgraph;
-	int index;
-
-	for(NodeInfo node: graph.nodes){
-		for(NodeID neighbor: graph.nodes[0].neighbors){
-			if(neighbor == node.id){
-				subgraph.nodes.push_back(node);
-				(subgraph.nodes.back()).neighbors = Intersection((subgraph.nodes.back()).neighbors, (graph.nodes.front()).neighbors);
-				(subgraph.nodes.back()).outDegree = (subgraph.nodes.back().neighbors).size();	
-				//Updating label
-				labels->at(node.id)--;
+		for(NodeID neighbor: g.out_neigh(i)){
+			if(g_i->lab[neighbor] == l){
+				g_i->lab[neighbor] = l-1;
+				
+				// Adding nodes to subgraph
+				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
 			}
-		}	
-	}	
-
-	return subgraph;	
-}
-
-//Recursive function to count cliques
-void Listing(vector<int> *labels, NewGraph &graph, vector<NodeID> *clique, int *count, int k){
-	
-	//Set label
-	int l = labels->at(clique->back());
-	
-	//Last level of recursion
-	if (l == 2){
-		for(int i = 0; i < graph.nodes.size(); i++){
 			
-			//Increment count based on the number of edges in the final level subgraph
-			*count += graph.nodes[i].neighbors.size();
-			/*
-			for(NodeID node: graph.nodes[i].neighbors){
-				*count++;
-				cout << "Here" << endl;
-				clique->clear();
-			}*/
 		}
-		clique->clear();
 		
-		return;
-	}
-	
+		// Only proceed if there is potential for a clique
+		if(g_i->ns[l-1] >= l - 1){
+		//{
+			// Building subgraph
+			for(int j = 0; j < g_i->ns[l-1]; j++){
+				g_i->d[l-1][j] = 0;
+				int node = g_i->sub[l-1][j];
 
-	//Generate vertex induced subgraph	
-	NewGraph subgraph;
-       
-	if(l == k){	
-		subgraph = InducedGraph(graph, clique->at(0),labels);
+				// Looking at edges between nodes 
+				for(NodeID neighbor: g.out_neigh(node)){
+					// Node is present in the subgraph
+					if(g_i->lab[neighbor] == l-1){
+						(g_i->d[l-1][j])++;
+					}
+				}
+			}
+
+			// Nodes in decreasing order of degree	
+		}
+		
+		Listing(g, g_i, l-1, n);
+		
+		// Resetting labels	
+		for(int k = 0; k < g_i->ns[l-1]; k++){
+			int node = g_i->sub[l-1][k];
+			g_i->lab[node] = l;
+		}
 	}
-	else{
-		subgraph = InducedGraph(graph, labels); 
-	}
-	
-	//Not enough out neighbors
-	if(subgraph.nodes.empty()){
-		clique->clear();
-		return;
-	}
-	//Add current vertex to candidate clique
-	clique->push_back(subgraph.nodes.front().id);	
-	Listing(labels, subgraph, clique, count, k);
+
 }
 
 int main(int argc, char* argv[]){
@@ -186,41 +106,24 @@ int main(int argc, char* argv[]){
 
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-	
-	int k = atoi(argv[3]);
-
 	auto start = std::chrono::system_clock::now();
-	NewGraph graph = GetInfo(g, k);
+	
+	Graph dag = b.MakeDag(g);
+	int k = atoi(argv[3]);
+	Graph_Info graph_struct;
+	Init(dag, &graph_struct, k);
+	
 	auto end = std::chrono::system_clock::now();
-	
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-	cout << "Time to create graph struct: " << elapsed.count() << endl; 
+	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
-	//Initialize Labels	
-        vector<int> *labels = new vector<int>;
-
-        labels->reserve(g.num_nodes());
-        for(int i = 0; i < g.num_nodes(); i++){
-                labels->push_back(k);
-        }
-	
-	int *count = new int;
-	*count = 0;
-
-	vector<NodeID> *clique = new vector<NodeID>;
-	clique->reserve(k);
-
 	start = std::chrono::system_clock::now();
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		
-		clique->push_back(u);
-		Listing(labels, graph, clique, count, k);
-		ResetLabels(graph, labels, k);
-	}
+	int n = 0;
+	Listing(dag, &graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
-	cout << "Number of cliques: " << *count << endl;
+	cout << "Number of cliques: " << n << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
