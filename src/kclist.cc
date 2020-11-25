@@ -114,14 +114,14 @@ int main(int argc, char* argv[]){
 	Init(dag, &graph_struct, k);
 	
 	auto end = std::chrono::system_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::duration<int>>(end - start);
+	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
 	start = std::chrono::system_clock::now();
 	int n = 0;
 	Listing(dag, &graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
-	elapsed = std::chrono::duration_cast<std::chrono::duration<int>>(end - start);
+	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
 	cout << "Number of cliques: " << n << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
