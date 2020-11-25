@@ -93,6 +93,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		for(int k = 0; k < g_i->ns[l-1]; k++){
 			int node = g_i->sub[l-1][k];
 			g_i->lab[node] = l;
+			g_i->d[l-1][k] = 0; 
 		}
 	}
 
