@@ -63,6 +63,7 @@ void BubbleDown(Min_Heap *heap){
 }
 
 void Insert(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
+	heap->n++;
 	heap->kv_pair[heap->n - 1] = nodeDegPair;
 	BubbleUp(heap, heap->n - 1);
 }
@@ -81,20 +82,15 @@ pair<NodeID, int> PopMin(Min_Heap *heap){
 }
 
 void MkHeap(Graph &g, Min_Heap *heap){
-	heap->n = g.num_nodes();
+	heap->n = 0;
 	
-	vector<pair<NodeID, int>> nodeDegPairs(g.num_nodes(), make_pair(0, 1000000));
+	vector<pair<NodeID, int>> nodeDegPairs(g.num_nodes());
 	heap->kv_pair = nodeDegPairs;
 
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		pair<NodeID, int> nodeDegPair = make_pair(u, g.out_degree(u));
 		Insert(heap, nodeDegPair);
-		cout << "Heap" << endl;
-		for(int i = 0; i < heap->n; i++){
-			cout << heap->kv_pair[i].first << ": " << heap->kv_pair[i].second << endl;
-		}
 	}
-
 }
 
 vector<int> OrdCore(Graph &g, Min_Heap *heap){
