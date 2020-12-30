@@ -68,7 +68,7 @@ void Insert(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
 	BubbleUp(heap, heap->n - 1);
 }
 
-void Update(Min_Heap *heap, NodeID node){
+void UpdateHeap(Min_Heap *heap, NodeID node){
 	heap->kv_pair[node].second--;
 	BubbleUp(heap, node);
 }
@@ -98,10 +98,19 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 	int n = g.num_nodes();
 	int r = 0;
 
+	MkHeap(g, heap);
+
 	for(int i = 0; i < n; i++){
-		ranking[heap->kv_pair[i].first] = n - (++r);
+		pair<NodeID, int> root = PopMin(heap);
+		ranking[root.first] = n - (++r);
+		for(NodeID neighbor: g.out_neigh(root.first)){
+			UpdateHeap(heap, neighbor);
+		}
 	}
 
+	for(auto elem: ranking){
+		cout << elem << endl;
+	}
 	return ranking;
 }
 
@@ -190,7 +199,8 @@ int main(int argc, char* argv[]){
 	Graph g = b.MakeGraph();
 	
 	Min_Heap bin_heap;
-	MkHeap(g, &bin_heap);	
+	//MkHeap(g, &bin_heap);	
+	OrdCore(g, &bin_heap);
 
 	auto start = std::chrono::system_clock::now();
 	
