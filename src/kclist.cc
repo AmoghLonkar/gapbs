@@ -23,29 +23,32 @@ struct Graph_Info{
 	vector<vector<int>> sub;
 };
 
-struct sortBySec{
-	constexpr bool operator()(pair<NodeID, int> &a, pair<NodeID, int> &b)
-	const noexcept{
-		return a.second > b.second; 
-	}
+struct Min_Heap{
+	int n;
+	vector<pair<NodeID, int>> kv_pair;
 };
 
-priority_queue<pair<NodeID, int>, vector<pair<NodeID, int>>, sortBySec> MkHeap(Graph &g){
-	priority_queue<pair<NodeID, int>, vector<pair<NodeID, int>>, sortBySec> minHeap;
-
+void MkHeap(Graph &g, Min_Heap *heap){
+	heap->n = g.num_nodes();
+	
+	vector<pair<NodeID, int>> nodeDegPairs(g.num_nodes(), make_pair(0, 0));
 	for(NodeID u = 0; u < g.num_nodes(); u++){
-		minHeap.push(make_pair(u, g.out_degree(u)));
+		nodeDegPairs[u] = make_pair(u, g.out_degree(u));
 	}
 
-	/*
-	cout << "Heap: " << endl;
-	while(!minHeap.empty()){
-		cout << minHeap.top().first << ": " << minHeap.top().second << endl;
-		minHeap.pop();
-	}
-	*/
+	heap->kv_pair = nodeDegPairs;
+}
 
-	return minHeap;
+vector<int> OrdCore(Graph &g, Min_Heap *heap){
+	vector<int> ranking(g.num_nodes());
+	int n = g.num_nodes();
+	int r = 0;
+
+	for(int i = 0; i < n; i++){
+		ranking[heap->kv_pair[i].first] = n - (++r);
+	}
+
+	return ranking;
 }
 
 void Init(Graph &g, Graph_Info *g_i, int k){
@@ -132,7 +135,8 @@ int main(int argc, char* argv[]){
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	
-	//MkHeap(g);
+	Min_Heap bin_heap;
+	MkHeap(g, &bin_heap);	
 
 	auto start = std::chrono::system_clock::now();
 	
