@@ -5,6 +5,7 @@
 #include <string>
 #include <set>
 #include <omp.h>
+#include <queue>
 #include <unordered_map>
 #include "benchmark.h"
 #include "builder.h"
@@ -21,6 +22,31 @@ struct Graph_Info{
 	vector<int> lab;
 	vector<vector<int>> sub;
 };
+
+struct sortBySec{
+	constexpr bool operator()(pair<NodeID, int> &a, pair<NodeID, int> &b)
+	const noexcept{
+		return a.second > b.second; 
+	}
+};
+
+priority_queue<pair<NodeID, int>, vector<pair<NodeID, int>>, sortBySec> MkHeap(Graph &g){
+	priority_queue<pair<NodeID, int>, vector<pair<NodeID, int>>, sortBySec> minHeap;
+
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		minHeap.push(make_pair(u, g.out_degree(u)));
+	}
+
+	/*
+	cout << "Heap: " << endl;
+	while(!minHeap.empty()){
+		cout << minHeap.top().first << ": " << minHeap.top().second << endl;
+		minHeap.pop();
+	}
+	*/
+
+	return minHeap;
+}
 
 void Init(Graph &g, Graph_Info *g_i, int k){
 	vector<int> ns(k+1, 0);
@@ -68,8 +94,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		}
 		
 		// Only proceed if there is potential for a clique
-		if(g_i->ns[l-1] >= l - 1){
-		//{
+		//if(g_i->ns[l-1] >= l - 1){
+		{
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
 				g_i->d[l-1][j] = 0;
@@ -105,6 +131,9 @@ int main(int argc, char* argv[]){
 
 	Builder b(cli);
 	Graph g = b.MakeGraph();
+	
+	//MkHeap(g);
+
 	auto start = std::chrono::system_clock::now();
 	
 	Graph dag = b.MakeDag(g);
