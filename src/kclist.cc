@@ -20,7 +20,7 @@ struct Graph_Info{
 	vector<int> ns;
 	vector<vector<int>> d;
 	vector<int> lab;
-	vector<vector<int>> sub;
+	vector<vector<NodeID>> sub;
 };
 
 struct Min_Heap{
@@ -108,9 +108,11 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 		}
 	}
 
+	/*
 	for(auto elem: ranking){
 		cout << elem << endl;
-	}
+	}*/
+
 	return ranking;
 }
 
@@ -128,7 +130,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	vector<int> lab(g.num_nodes(), k);
 	g_i->lab = lab;
 	
-	vector<vector<int>> sub(k+1, vector<int>(g.num_nodes(), 0));
+	vector<vector<NodeID>> sub(k+1, vector<int>(g.num_nodes(), 0));
 	for(NodeID i = 0; i < g.num_nodes(); i++){
 		sub[k][i] = i; 
 	}
@@ -149,7 +151,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	for(int i = 0; i < g_i->ns[l]; i++){
 		g_i->ns[l-1] = 0;
 
-		for(NodeID neighbor: g.out_neigh(g_i->sub[l][i])){
+		NodeID u = g_i->sub[l][i];
+		for(NodeID neighbor: g.out_neigh(u)){
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
@@ -160,12 +163,11 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		}
 		
 		// Only proceed if there is potential for a clique
-		//if(g_i->ns[l-1] >= l - 1){
-		{
+		if(g_i->ns[l-1] >= l - 1){
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
 				g_i->d[l-1][j] = 0;
-				int node = g_i->sub[l-1][j];
+				NodeID node = g_i->sub[l-1][j];
 
 				// Looking at edges between nodes 
 				for(NodeID neighbor: g.out_neigh(node)){
@@ -181,7 +183,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		
 		// Resetting labels	
 		for(int k = 0; k < g_i->ns[l-1]; k++){
-			int node = g_i->sub[l-1][k];
+			NodeID node = g_i->sub[l-1][k];
 			g_i->lab[node] = l;
 			g_i->d[l-1][k] = 0; 
 		}
@@ -197,14 +199,14 @@ int main(int argc, char* argv[]){
 
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-	
-	Min_Heap bin_heap;
-	//MkHeap(g, &bin_heap);	
-	OrdCore(g, &bin_heap);
 
 	auto start = std::chrono::system_clock::now();
 	
-	Graph dag = b.MakeDag(g);
+	Min_Heap bin_heap;
+	vector<int> ranking = OrdCore(g, &bin_heap);
+	
+	//Graph dag = b.MakeDag(g);
+	Graph dag = b.MakeDagFromRank(g, ranking);
 	int k = atoi(argv[3]);
 	Graph_Info graph_struct;
 	Init(dag, &graph_struct, k);
