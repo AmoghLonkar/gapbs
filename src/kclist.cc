@@ -50,7 +50,12 @@ void BubbleDown(Min_Heap *heap){
 	int j2 = 2;
 
 	while(j1 < heap->n){
-		j=( (j2 < heap->n) && (heap->kv_pair[j2].second < heap->kv_pair[j1].first) ) ? j2 : j1 ;
+		if((j2 < heap->n) && (heap->kv_pair[j2].second < heap->kv_pair[j1].second)){
+			j = j2;
+		}
+		else{
+			j = j1;
+		}
 		if(heap->kv_pair[j].second < heap->kv_pair[i].second){
 			swap(heap->kv_pair[i], heap->kv_pair[j]);
 			i = j;
@@ -69,7 +74,11 @@ void Insert(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
 }
 
 void UpdateHeap(Min_Heap *heap, NodeID node){
-	heap->kv_pair[node].second--;
+	for(int i = 0; i < heap->n; i++){
+		if(heap->kv_pair[i].first == node){
+			heap->kv_pair[i].second--;
+		}
+	}
 	BubbleUp(heap, node);
 }
 
@@ -106,12 +115,9 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 		for(NodeID neighbor: g.out_neigh(root.first)){
 			UpdateHeap(heap, neighbor);
 		}
-	}
 
-	/*
-	for(auto elem: ranking){
-		cout << elem << endl;
-	}*/
+		
+	}
 
 	return ranking;
 }
