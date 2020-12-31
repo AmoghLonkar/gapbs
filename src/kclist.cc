@@ -19,7 +19,7 @@ struct Graph_Info{
 	vector<int> ns;
 	vector<vector<int>> d;
 	vector<int> lab;
-	vector<vector<int>> sub;
+	vector<vector<NodeID>> sub;
 };
 
 void Init(Graph &g, Graph_Info *g_i, int k){
@@ -36,7 +36,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	vector<int> lab(g.num_nodes(), k);
 	g_i->lab = lab;
 	
-	vector<vector<int>> sub(k+1, vector<int>(g.num_nodes(), 0));
+	vector<vector<NodeID>> sub(k+1, vector<int>(g.num_nodes(), 0));
 	for(NodeID i = 0; i < g.num_nodes(); i++){
 		sub[k][i] = i; 
 	}
@@ -57,7 +57,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 	for(int i = 0; i < g_i->ns[l]; i++){
 		g_i->ns[l-1] = 0;
 
-		for(NodeID neighbor: g.out_neigh(g_i->sub[l][i])){
+		NodeID u = g_i->sub[l][i];
+		for(NodeID neighbor: g.out_neigh(u)){
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
@@ -73,7 +74,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
 				g_i->d[l-1][j] = 0;
-				int node = g_i->sub[l-1][j];
+				NodeID node = g_i->sub[l-1][j];
 
 				// Looking at edges between nodes 
 				for(NodeID neighbor: g.out_neigh(node)){
