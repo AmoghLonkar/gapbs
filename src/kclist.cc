@@ -74,11 +74,12 @@ void Insert(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
 }
 
 void UpdateHeap(Min_Heap *heap, NodeID node){
-	for(int i = 0; i < heap->n; i++){
-		if(heap->kv_pair[i].first == node){
-			heap->kv_pair[i].second--;
-		}
-	}
+	auto it = std::find_if( heap->kv_pair.begin(), heap->kv_pair.end(),
+    [node](const pair<NodeID, int> element){ return element.first == node;} );
+
+	int index = it - heap->kv_pair.begin();
+	heap->kv_pair[index].second--;
+
 	BubbleUp(heap, node);
 }
 
@@ -115,8 +116,6 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 		for(NodeID neighbor: g.out_neigh(root.first)){
 			UpdateHeap(heap, neighbor);
 		}
-
-		
 	}
 
 	return ranking;
