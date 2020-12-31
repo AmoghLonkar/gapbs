@@ -305,6 +305,25 @@ class BuilderBase {
 	return SquishGraph(dag);
   }	  
 
+  CSRGraph<NodeID_, DestID_, invert> MakeDagFromRank(
+	        const CSRGraph<NodeID_, DestID_, invert> &g, std::vector<int> ranking) {
+  	EdgeList el;
+
+	for(NodeID_ u = 0; u < g.num_nodes(); u++){
+		for(NodeID_ v: g.out_neigh(u)){
+			if(ranking[u] < ranking[v]){
+				el.push_back(Edge(v, u));
+			}
+			else{
+				el.push_back(Edge(u, v));
+			}
+		}
+	}
+
+	CSRGraph<NodeID_, DestID_, invert> dag;
+	dag = MakeGraphFromEL(el);
+	return SquishGraph(dag);
+  }	  
 
   CSRGraph<NodeID_, DestID_, invert> InducedSubgraph(
 	        const CSRGraph<NodeID_, DestID_, invert> &g, NodeID_ vertex) {
