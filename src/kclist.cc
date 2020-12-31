@@ -25,14 +25,37 @@ struct Graph_Info{
 
 struct Min_Heap{
 	int n;
-	vector<pair<NodeID, int>> kv_pair;
+	int *ptrs;
+	pair<NodeID, int> *kv_pair;
 };
+
+void InitHeap(Min_Heap *heap, int num_nodes){
+	heap->n = 0;
+	heap->ptrs = new int[num_nodes];
+
+	for(int i = 0; i < num_nodes; i++){
+		heap->ptrs[i] = -1;
+	}
+
+	heap->kv_pair = new pair<NodeID, int>[num_nodes];
+}
+
+void Swap(Min_Heap *heap, int i, int j){
+	pair<NodeID, int> temp_kv = heap->kv_pair[i];
+	int temp_ptr = heap->ptrs[i];
+
+	heap->ptrs[heap->kv_pair[i].first] = heap->ptrs[heap->kv_pair[j].first];
+	heap->kv_pair[i] = heap->kv_pair[j];
+
+	heap->ptrs[heap->kv_pair[j].first] = temp_ptr;
+	heap->kv_pair[j] = temp_kv;
+}
 
 void BubbleUp(Min_Heap *heap, int i){
 	int j = (i-1)/2;
 	while(i > 0){
 		if(heap->kv_pair[j].second > heap->kv_pair[i].second){
-			swap(heap->kv_pair[i], heap->kv_pair[j]);
+			Swap(heap, i, j);
 			i = j;
 			j = (i - 1)/2;
 		}
@@ -57,7 +80,7 @@ void BubbleDown(Min_Heap *heap){
 			j = j1;
 		}
 		if(heap->kv_pair[j].second < heap->kv_pair[i].second){
-			swap(heap->kv_pair[i], heap->kv_pair[j]);
+			Swap(heap, i, j);
 			i = j;
 			j1 = 2*i + 1;
 			j2 = j1 + 1;
@@ -68,34 +91,31 @@ void BubbleDown(Min_Heap *heap){
 }
 
 void Insert(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
-	heap->n++;
+	heap->ptrs[nodeDegPair.first] = (heap->n)++;
 	heap->kv_pair[heap->n - 1] = nodeDegPair;
 	BubbleUp(heap, heap->n - 1);
 }
 
 void UpdateHeap(Min_Heap *heap, NodeID node){
-	auto it = std::find_if( heap->kv_pair.begin(), heap->kv_pair.end(),
-    [node](const pair<NodeID, int> element){ return element.first == node;} );
-
-	int index = it - heap->kv_pair.begin();
-	heap->kv_pair[index].second--;
-
-	BubbleUp(heap, node);
+	int ptr = heap->ptrs[node];
+	if(ptr != -1){
+		heap->kv_pair[ptr].second--;
+		BubbleUp(heap, node);
+	}	
 }
 
 pair<NodeID, int> PopMin(Min_Heap *heap){
 	pair<NodeID, int> root = heap->kv_pair[0];
+	heap->ptrs[root.first] = -1;
 	heap->kv_pair[0] = heap->kv_pair[--(heap->n)];
+	heap->ptrs[heap->kv_pair[0].first] = 0;
 	BubbleDown(heap);
 
 	return root;
 }
 
 void MkHeap(Graph &g, Min_Heap *heap){
-	heap->n = 0;
-	
-	vector<pair<NodeID, int>> nodeDegPairs(g.num_nodes());
-	heap->kv_pair = nodeDegPairs;
+	InitHeap(heap, g.num_nodes());
 
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		pair<NodeID, int> nodeDegPair = make_pair(u, g.out_degree(u));
@@ -117,6 +137,9 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 			UpdateHeap(heap, neighbor);
 		}
 	}
+
+	delete[] heap->ptrs;
+	delete[] heap->kv_pair;
 
 	return ranking;
 }
