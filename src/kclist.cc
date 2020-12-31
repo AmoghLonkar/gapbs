@@ -230,11 +230,11 @@ int main(int argc, char* argv[]){
 
 	auto start = std::chrono::system_clock::now();
 	
-	Min_Heap bin_heap;
-	vector<int> ranking = OrdCore(g, &bin_heap);
+	//Min_Heap bin_heap;
+	//vector<int> ranking = OrdCore(g, &bin_heap);
+	//Graph dag = b.MakeDagFromRank(g, ranking);
 	
-	//Graph dag = b.MakeDag(g);
-	Graph dag = b.MakeDagFromRank(g, ranking);
+	Graph dag = b.MakeDag(g);
 	int k = atoi(argv[3]);
 	Graph_Info graph_struct;
 	Init(dag, &graph_struct, k);
