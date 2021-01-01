@@ -19,8 +19,10 @@ using namespace std;
 struct Graph_Info{
 	vector<int> ns;
 	vector<vector<int>> d;
-	vector<int> lab;
+	vector<int> cd;
+	vector<NodeID> adj_list;
 	vector<vector<NodeID>> sub;
+	vector<int> lab;
 };
 
 struct Min_Heap{
@@ -155,6 +157,23 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	}
 	g_i->d = d;
 
+	vector<int> cd(g.num_nodes() + 1, 0);
+	for(NodeID i = 1; i < g.num_nodes() + 1; i++){
+		cd[i] = cd[i-1] + g.out_degree(i-1);
+	}
+	g_i->cd = cd;
+
+	vector<NodeID> adj;
+	
+	for(NodeID i = 0; i < g.num_nodes(); i++){
+		for(NodeID neighbor: g.out_neigh(i)){
+			adj.push_back(neighbor);
+			
+		}
+	}
+
+	g_i->adj_list = adj;
+
 	vector<int> lab(g.num_nodes(), k);
 	g_i->lab = lab;
 	
@@ -180,7 +199,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(NodeID neighbor: g.out_neigh(u)){
+		for(NodeID j = g_i->cd[u-1]; j < g_i->cd[u-1] + g_i->d[l][u]; j++){
+			NodeID neighbor = g_i->adj_list[j];
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
@@ -237,8 +257,9 @@ int main(int argc, char* argv[]){
 	Graph dag = b.MakeDag(g);
 	int k = atoi(argv[3]);
 	Graph_Info graph_struct;
+
 	Init(dag, &graph_struct, k);
-	
+
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
