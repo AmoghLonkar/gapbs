@@ -168,7 +168,6 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	for(NodeID i = 0; i < g.num_nodes(); i++){
 		for(NodeID neighbor: g.out_neigh(i)){
 			adj.push_back(neighbor);
-			
 		}
 	}
 
@@ -199,29 +198,35 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(NodeID j = g_i->cd[u-1]; j < g_i->cd[u-1] + g_i->d[l][u]; j++){
+		for(NodeID j = g_i->cd[u]; j < g_i->cd[u] + g_i->d[l][u]; j++){
 			NodeID neighbor = g_i->adj_list[j];
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
 				// Adding nodes to subgraph
 				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
+				g_i->d[l-1][neighbor] = 0;
 			}
-			
 		}
 		
 		// Only proceed if there is potential for a clique
 		if(g_i->ns[l-1] >= l - 1){
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
-				g_i->d[l-1][j] = 0;
 				NodeID node = g_i->sub[l-1][j];
 
+				int bound = g_i->cd[node] + g_i->d[l][u];
 				// Looking at edges between nodes 
-				for(NodeID neighbor: g.out_neigh(node)){
+				for(NodeID k = g_i->cd[node]; k < bound; k++){
+					NodeID neighbor = g_i->adj_list[k];
+					
 					// Node is present in the subgraph
 					if(g_i->lab[neighbor] == l-1){
 						(g_i->d[l-1][j])++;
+					}
+					else{
+						g_i->adj_list[k--] = g_i->adj_list[--bound];
+						g_i->adj_list[bound] = neighbor;
 					}
 				}
 			}
