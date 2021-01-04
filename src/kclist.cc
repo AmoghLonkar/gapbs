@@ -183,7 +183,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	g_i->sub = sub;	
 }
 
-void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
+void Listing(Graph_Info *g_i, int l, int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
@@ -214,8 +214,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
 				NodeID node = g_i->sub[l-1][j];
-
 				int bound = g_i->cd[node] + g_i->d[l][u];
+				
 				// Looking at edges between nodes 
 				for(NodeID k = g_i->cd[node]; k < bound; k++){
 					NodeID neighbor = g_i->adj_list[k];
@@ -229,16 +229,17 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 						g_i->adj_list[bound] = neighbor;
 					}
 				}
+
 			}
 		}
-		
-		Listing(g, g_i, l-1, n);
+
+		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
-		for(int k = 0; k < g_i->ns[l-1]; k++){
-			NodeID node = g_i->sub[l-1][k];
+		for(int u = 0; u < g_i->ns[l-1]; u++){
+			NodeID node = g_i->sub[l-1][u];
 			g_i->lab[node] = l;
-			g_i->d[l-1][k] = 0; 
+			g_i->d[l-1][u] = 0; 
 		}
 	}
 
@@ -271,7 +272,7 @@ int main(int argc, char* argv[]){
 	
 	start = std::chrono::system_clock::now();
 	int n = 0;
-	Listing(dag, &graph_struct, k, &n);
+	Listing(&graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
