@@ -262,7 +262,6 @@ void Listing(Graph_Info *g_i, int l, int *n){
 		for(int u = 0; u < g_i->ns[l-1]; u++){
 			NodeID node = g_i->sub[l-1][u];
 			g_i->lab[node] = l;
-			//g_i->d[l-1][u] = 0; 
 		}
 	}
 
