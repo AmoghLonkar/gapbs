@@ -208,35 +208,31 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 				g_i->lab[neighbor] = l-1;
 				
 				// Adding nodes to subgraph
-				g_i->sub[l-1][g_i->ns[l-1]] = neighbor;
-				g_i->ns[l-1]++;
-				//g_i->d[l-1][neighbor] = 0;
+				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
+				g_i->d[l-1][neighbor] = 0;
 			}
 		}
 		
 		// Only proceed if there is potential for a clique
 		//if(g_i->ns[l-1] >= l - 1){
-		{
-			// Building subgraph
-			for(int j = 0; j < g_i->ns[l-1]; j++){
-				g_i->d[l-1][j] = 0;
-				NodeID node = g_i->sub[l-1][j];
-				bound = g_i->cd[node] + g_i->d[l][node];
+		
+		// Building subgraph
+		for(int j = 0; j < g_i->ns[l-1]; j++){
+			g_i->d[l-1][j] = 0;
+			NodeID node = g_i->sub[l-1][j];
+			bound = g_i->cd[node] + g_i->d[l][node];
+			
+			// Looking at edges between nodes
+			for(int k = g_i->cd[node]; k < bound; k++){
+				NodeID neighbor = g_i->adj_list[k];
 				
-				// Looking at edges between nodes
-				for(int k = g_i->cd[node]; k < bound; k++){
-					NodeID neighbor = g_i->adj_list[k];
-					
-					// Node is present in the subgraph
-					if(g_i->lab[neighbor] == l-1){
-						(g_i->d[l-1][node])++;
-					}
-					else{
-						bound--;
-						g_i->adj_list[k] = g_i->adj_list[bound];
-						k--;
-						g_i->adj_list[bound] = neighbor;
-					}
+				// Node is present in the subgraph
+				if(g_i->lab[neighbor] == l-1){
+					(g_i->d[l-1][node])++;
+				}
+				else{
+					g_i->adj_list[k--] = g_i->adj_list[--bound];
+					g_i->adj_list[bound] = neighbor;
 				}
 			}
 		}
