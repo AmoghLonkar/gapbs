@@ -17,12 +17,21 @@
 using namespace std;
 
 struct Graph_Info{
+	/*
 	vector<int> ns;
 	vector<vector<int>> d;
 	vector<int> cd;
 	vector<NodeID> adj_list;
 	vector<vector<NodeID>> sub;
 	vector<int> lab;
+	*/
+
+	int *ns;
+	int **d;
+	int *cd;
+	NodeID *adj_list;
+	NodeID **sub;
+	int *lab;
 };
 
 struct Min_Heap{
@@ -147,40 +156,62 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 }
 
 void Init(Graph &g, Graph_Info *g_i, int k){
-	vector<int> ns(k+1, 0);
-	ns[k] = g.num_nodes();
-	g_i->ns = ns;
-	
-	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
-	for(NodeID i = 0; i < g.num_nodes(); i++){
-		d[k][i] = g.out_degree(i);
-	}
-	g_i->d = d;
 
-	vector<int> cd(g.num_nodes() + 1, 0);
-	for(NodeID i = 1; i < g.num_nodes() + 1; i++){
-		cd[i] = cd[i-1] + g.out_degree(i-1);
-	}
-	g_i->cd = cd;
+	g_i->ns = new int[k+1];
+	g_i->ns[k] = g.num_nodes();
 
-	vector<NodeID> adj;
-	
-	for(NodeID i = 0; i < g.num_nodes(); i++){
+	int *d = new int[g.num_nodes()];
+	for(int i = 0; i < g.num_nodes(); i++){
+		d[i] = g.out_degree(i);
+	}
+
+	g_i->d = new int*[k+1];
+	for(int i = 2; i < k; i++){
+		g_i->d[i] = new int[g.num_nodes()];
+	}
+	g_i->d[k] = d;
+
+	g_i->cd = new int[g.num_nodes()+1];
+	g_i->cd[0] = 0;
+	for(int i = 1; i < g.num_nodes() + 1; i++){
+		g_i->cd[i] = g_i->cd[i-1] + g.out_degree(i - 1);
+	}
+
+	g_i->adj_list = new NodeID[g.num_edges()];
+	int index = 0;
+	for(int i = 0; i < g.num_nodes(); i++){
 		for(NodeID neighbor: g.out_neigh(i)){
-			adj.push_back(neighbor);
+			g_i->adj_list[index++] = neighbor;
 		}
 	}
 
-	g_i->adj_list = adj;
-
-	vector<int> lab(g.num_nodes(), k);
-	g_i->lab = lab;
-	
-	vector<vector<NodeID>> sub(k+1, vector<int>(g.num_nodes(), 0));
-	for(NodeID i = 0; i < g.num_nodes(); i++){
-		sub[k][i] = i; 
+	g_i->lab = new int[g.num_nodes()];
+	for(int i = 0; i < g.num_nodes(); i++){
+		g_i->lab[i] = k;
 	}
-	g_i->sub = sub;	
+	
+	int *sub = new int[g.num_nodes()];
+	for(NodeID i = 0; i < g.num_nodes(); i++){
+		sub[i] = i;
+	}
+
+	g_i->sub = new int*[k+1];
+	for(int i = 2; i < k; i++){
+		g_i->sub[i] = new int[g.num_nodes()];
+	}
+	g_i->sub[k] = sub;
+}
+
+void FreeMem(Graph_Info *g_i, int k){
+	delete[] g_i->ns;
+	delete[] g_i->cd;
+	delete[] g_i->adj_list;
+	delete[] g_i->lab;
+
+	for(int i = 2; i < k+1; i++){
+		delete []g_i->d[i];
+		delete []g_i->sub[i];
+	}
 }
 
 void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
@@ -280,6 +311,7 @@ int main(int argc, char* argv[]){
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
+	FreeMem(&graph_struct, k);
 	cout << "Number of cliques: " << n << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
