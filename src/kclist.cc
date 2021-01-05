@@ -187,7 +187,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
-			(*n) += g_i->d[2][i];
+			NodeID u = g_i->sub[2][i];
+			(*n) += g_i->d[2][u];
 		}
 		return;	
 	}
