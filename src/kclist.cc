@@ -183,7 +183,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	g_i->sub = sub;	
 }
 
-void Listing(Graph_Info *g_i, int l, int *n){
+void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
@@ -198,48 +198,55 @@ void Listing(Graph_Info *g_i, int l, int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(NodeID j = g_i->cd[u]; j < g_i->cd[u] + g_i->d[l][u]; j++){
+		
+		
+		int bound = g_i->cd[u] + g_i->d[l][u];
+		for(int j = g_i->cd[u]; j < bound; j++){
 			NodeID neighbor = g_i->adj_list[j];
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
 				// Adding nodes to subgraph
-				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
-				g_i->d[l-1][neighbor] = 0;
+				g_i->sub[l-1][g_i->ns[l-1]] = neighbor;
+				g_i->ns[l-1]++;
+				//g_i->d[l-1][neighbor] = 0;
 			}
 		}
 		
 		// Only proceed if there is potential for a clique
-		if(g_i->ns[l-1] >= l - 1){
+		//if(g_i->ns[l-1] >= l - 1){
+		{
 			// Building subgraph
 			for(int j = 0; j < g_i->ns[l-1]; j++){
+				g_i->d[l-1][j] = 0;
 				NodeID node = g_i->sub[l-1][j];
-				int bound = g_i->cd[node] + g_i->d[l][u];
+				bound = g_i->cd[node] + g_i->d[l][node];
 				
-				// Looking at edges between nodes 
-				for(NodeID k = g_i->cd[node]; k < bound; k++){
+				// Looking at edges between nodes
+				for(int k = g_i->cd[node]; k < bound; k++){
 					NodeID neighbor = g_i->adj_list[k];
 					
 					// Node is present in the subgraph
 					if(g_i->lab[neighbor] == l-1){
-						(g_i->d[l-1][j])++;
+						(g_i->d[l-1][node])++;
 					}
 					else{
-						g_i->adj_list[k--] = g_i->adj_list[--bound];
+						bound--;
+						g_i->adj_list[k] = g_i->adj_list[bound];
+						k--;
 						g_i->adj_list[bound] = neighbor;
 					}
 				}
-
 			}
 		}
 
-		Listing(g_i, l-1, n);
+		Listing(g, g_i, l-1, n);
 		
 		// Resetting labels	
 		for(int u = 0; u < g_i->ns[l-1]; u++){
 			NodeID node = g_i->sub[l-1][u];
 			g_i->lab[node] = l;
-			g_i->d[l-1][u] = 0; 
+			//g_i->d[l-1][u] = 0; 
 		}
 	}
 
@@ -272,7 +279,7 @@ int main(int argc, char* argv[]){
 	
 	start = std::chrono::system_clock::now();
 	int n = 0;
-	Listing(&graph_struct, k, &n);
+	Listing(dag, &graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
