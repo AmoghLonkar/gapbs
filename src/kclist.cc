@@ -205,7 +205,7 @@ void FreeMem(Graph_Info *g_i, int k){
 	}
 }
 
-void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
+void Listing(Graph_Info *g_i, int l, int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
@@ -221,8 +221,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		
-		
+
 		int bound = g_i->cd[u] + g_i->d[l][u];
 		for(int j = g_i->cd[u]; j < bound; j++){
 			NodeID neighbor = g_i->adj_list[j];
@@ -232,6 +231,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 				// Adding nodes to subgraph
 				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
 				g_i->d[l-1][neighbor] = 0;
+				//g_i->d[l-1][g_i->ns[l-1]++] = 0;
 			}
 		}
 		
@@ -247,6 +247,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 				// Node is present in the subgraph
 				if(g_i->lab[neighbor] == l-1){
 					(g_i->d[l-1][node])++;
+					//(g_i->d[l-1][j])++;
 				}
 				else{
 					g_i->adj_list[k--] = g_i->adj_list[--bound];
@@ -255,7 +256,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 			}
 		}
 
-		Listing(g, g_i, l-1, n);
+		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
 		for(int u = 0; u < g_i->ns[l-1]; u++){
@@ -294,7 +295,7 @@ int main(int argc, char* argv[]){
 	
 	start = std::chrono::system_clock::now();
 	int n = 0;
-	Listing(dag, &graph_struct, k, &n);
+	Listing(&graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
