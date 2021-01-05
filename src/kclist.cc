@@ -17,15 +17,6 @@
 using namespace std;
 
 struct Graph_Info{
-	/*
-	vector<int> ns;
-	vector<vector<int>> d;
-	vector<int> cd;
-	vector<NodeID> adj_list;
-	vector<vector<NodeID>> sub;
-	vector<int> lab;
-	*/
-
 	int *ns;
 	int **d;
 	int *cd;
@@ -244,12 +235,8 @@ void Listing(Graph &g, Graph_Info *g_i, int l, int *n){
 			}
 		}
 		
-		// Only proceed if there is potential for a clique
-		//if(g_i->ns[l-1] >= l - 1){
-		
-		// Building subgraph
+		// Computing degrees
 		for(int j = 0; j < g_i->ns[l-1]; j++){
-			g_i->d[l-1][j] = 0;
 			NodeID node = g_i->sub[l-1][j];
 			bound = g_i->cd[node] + g_i->d[l][node];
 			
