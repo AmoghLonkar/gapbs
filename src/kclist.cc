@@ -20,8 +20,8 @@ struct Graph_Info{
 	int *ns;
 	int **d;
 	int *cd;
-	NodeID *adj_list;
-	NodeID **sub;
+	int *adj_list;
+	int **sub;
 	int *lab;
 };
 
@@ -168,10 +168,10 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 		g_i->cd[i] = g_i->cd[i-1] + g.out_degree(i - 1);
 	}
 
-	g_i->adj_list = new NodeID[g.num_edges()];
+	g_i->adj_list = new int[g.num_edges()];
 	int index = 0;
 	for(int i = 0; i < g.num_nodes(); i++){
-		for(NodeID neighbor: g.out_neigh(i)){
+		for(int neighbor: g.out_neigh(i)){
 			g_i->adj_list[index++] = neighbor;
 		}
 	}
@@ -182,7 +182,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	}
 	
 	int *sub = new int[g.num_nodes()];
-	for(NodeID i = 0; i < g.num_nodes(); i++){
+	for(int i = 0; i < g.num_nodes(); i++){
 		sub[i] = i;
 	}
 
@@ -207,11 +207,11 @@ void FreeMem(Graph_Info *g_i, int k){
 
 void Listing(Graph_Info *g_i, int l, int *n){
 	int i, j, k, bound;
-	NodeID node, neighbor, u;
+	int node, neighbor, u;
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
-			NodeID u = g_i->sub[2][i];
+			u = g_i->sub[2][i];
 			(*n) += g_i->d[2][u];
 		}
 		return;	
@@ -265,7 +265,6 @@ void Listing(Graph_Info *g_i, int l, int *n){
 			g_i->lab[node] = l;
 		}
 	}
-
 }
 
 int main(int argc, char* argv[]){
