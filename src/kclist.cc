@@ -206,6 +206,8 @@ void FreeMem(Graph_Info *g_i, int k){
 }
 
 void Listing(Graph_Info *g_i, int l, int *n){
+	int i, j, k, bound;
+	NodeID node, neighbor, u;
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
@@ -217,14 +219,13 @@ void Listing(Graph_Info *g_i, int l, int *n){
 	
 	// For each node in g_l
 	// Initializing vertex-induced subgraph
-	for(int i = 0; i < g_i->ns[l]; i++){
+	for(i = 0; i < g_i->ns[l]; i++){
+		u = g_i->sub[l][i];
 		g_i->ns[l-1] = 0;
-
-		NodeID u = g_i->sub[l][i];
-
-		int bound = g_i->cd[u] + g_i->d[l][u];
-		for(int j = g_i->cd[u]; j < bound; j++){
-			NodeID neighbor = g_i->adj_list[j];
+		
+		bound = g_i->cd[u] + g_i->d[l][u];
+		for(j = g_i->cd[u]; j < bound; j++){
+			neighbor = g_i->adj_list[j];
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
@@ -236,13 +237,13 @@ void Listing(Graph_Info *g_i, int l, int *n){
 		}
 		
 		// Computing degrees
-		for(int j = 0; j < g_i->ns[l-1]; j++){
-			NodeID node = g_i->sub[l-1][j];
+		for(j = 0; j < g_i->ns[l-1]; j++){
+			node = g_i->sub[l-1][j];
 			bound = g_i->cd[node] + g_i->d[l][node];
 			
 			// Looking at edges between nodes
-			for(int k = g_i->cd[node]; k < bound; k++){
-				NodeID neighbor = g_i->adj_list[k];
+			for(k = g_i->cd[node]; k < bound; k++){
+				neighbor = g_i->adj_list[k];
 				
 				// Node is present in the subgraph
 				if(g_i->lab[neighbor] == l-1){
@@ -259,8 +260,8 @@ void Listing(Graph_Info *g_i, int l, int *n){
 		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
-		for(int u = 0; u < g_i->ns[l-1]; u++){
-			NodeID node = g_i->sub[l-1][u];
+		for(j = 0; j < g_i->ns[l-1]; j++){
+			node = g_i->sub[l-1][j];
 			g_i->lab[node] = l;
 		}
 	}
