@@ -16,8 +16,15 @@
 
 using namespace std;
 
+struct Edge{
+	int source;
+	int dest;
+};
+
 struct Graph_Info{
 	int *ns;
+	int e;
+	Edge *edges;
 	int **d;
 	int *cd;
 	int *adj_list;
@@ -30,6 +37,35 @@ struct Min_Heap{
 	int *ptrs;
 	pair<NodeID, int> *kv_pair;
 };
+
+void GetEdges(Graph &g, Graph_Info *g_i){
+	g_i->edges = new Edge[g.num_edges()];
+	int e = 0;
+	int index = 0;
+	for(int i = 0; i < g.num_nodes(); i++){
+		for(int neighbor: g.out_neigh(i)){
+			Edge temp;
+			temp.source = i;
+			temp.dest = neighbor;
+			g_i->edges[index++] = temp;
+			e++;
+		}	
+	}
+	
+	g_i->e = e;	
+}
+
+void Relabel(Graph_Info *g_i, vector<int> ranking){
+	for(int i = 0; i < g_i->e; i++){
+		int source_rank = ranking[g_i->edges[i].source];
+		int dest_rank = ranking[g_i->edges[i].dest];
+		if(source_rank < dest_rank){
+			swap(source_rank, dest_rank);
+		}
+		g_i->edges[i].source = source_rank;
+		g_i->edges[i].dest = dest_rank;
+	}
+}
 
 void InitHeap(Min_Heap *heap, int num_nodes){
 	heap->n = 0;
@@ -139,7 +175,7 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 			UpdateHeap(heap, neighbor);
 		}
 	}
-
+	
 	delete[] heap->ptrs;
 	delete[] heap->kv_pair;
 
@@ -147,7 +183,6 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 }
 
 void Init(Graph &g, Graph_Info *g_i, int k){
-
 	g_i->ns = new int[k+1];
 	g_i->ns[k] = g.num_nodes();
 
@@ -205,7 +240,7 @@ void FreeMem(Graph_Info *g_i, int k){
 	}
 }
 
-void Listing(Graph_Info *g_i, int l, int *n){
+void Listing(Graph_Info *g_i, int l, int *n, double *loop_time){
 	int i, j, k, bound;
 	int node, neighbor, u;
 
@@ -224,6 +259,7 @@ void Listing(Graph_Info *g_i, int l, int *n){
 		g_i->ns[l-1] = 0;
 		
 		bound = g_i->cd[u] + g_i->d[l][u];
+
 		for(j = g_i->cd[u]; j < bound; j++){
 			neighbor = g_i->adj_list[j];
 			if(g_i->lab[neighbor] == l){
@@ -236,6 +272,7 @@ void Listing(Graph_Info *g_i, int l, int *n){
 			}
 		}
 		
+
 		// Computing degrees
 		for(j = 0; j < g_i->ns[l-1]; j++){
 			node = g_i->sub[l-1][j];
@@ -251,13 +288,17 @@ void Listing(Graph_Info *g_i, int l, int *n){
 					//(g_i->d[l-1][j])++;
 				}
 				else{
+					//auto start = std::chrono::system_clock::now();
 					g_i->adj_list[k--] = g_i->adj_list[--bound];
 					g_i->adj_list[bound] = neighbor;
+					//auto end = std::chrono::system_clock::now();
+					//auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+					//(*loop_time) += elapsed.count();
 				}
 			}
 		}
 
-		Listing(g_i, l-1, n);
+		Listing(g_i, l-1, n, loop_time);
 		
 		// Resetting labels	
 		for(j = 0; j < g_i->ns[l-1]; j++){
@@ -275,16 +316,18 @@ int main(int argc, char* argv[]){
 
 	Builder b(cli);
 	Graph g = b.MakeGraph();
-
+	Graph_Info graph_struct;
+	GetEdges(g, &graph_struct);
+	
 	auto start = std::chrono::system_clock::now();
 	
-	//Min_Heap bin_heap;
-	//vector<int> ranking = OrdCore(g, &bin_heap);
-	//Graph dag = b.MakeDagFromRank(g, ranking);
+	Min_Heap bin_heap;
+	vector<int> ranking = OrdCore(g, &bin_heap);
+	Relabel(&graph_struct, ranking);
+	Graph dag = b.MakeDagFromRank(g, ranking);
 	
-	Graph dag = b.MakeDag(g);
+	//Graph dag = b.MakeDag(g);
 	int k = atoi(argv[3]);
-	Graph_Info graph_struct;
 
 	Init(dag, &graph_struct, k);
 
@@ -292,14 +335,22 @@ int main(int argc, char* argv[]){
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
+	cout << "Adjacency List: ";
+	for(int i = 0; i < dag.num_edges(); i++){
+		cout << graph_struct.adj_list[i] << " ";  
+	}
+	cout << endl;
+
 	start = std::chrono::system_clock::now();
 	int n = 0;
-	Listing(&graph_struct, k, &n);
+	double loop_time = 0;
+	Listing(&graph_struct, k, &n, &loop_time);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
 	FreeMem(&graph_struct, k);
 	cout << "Number of cliques: " << n << endl;
+	//cout << "Total time to calculate degrees: " << loop_time << "s" << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
