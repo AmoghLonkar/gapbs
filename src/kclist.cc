@@ -78,6 +78,11 @@ void InitHeap(Min_Heap *heap, int num_nodes){
 	heap->kv_pair = new pair<NodeID, int>[num_nodes];
 }
 
+void FreeHeap(Min_Heap *heap){
+	delete[] heap->ptrs;
+	delete[] heap->kv_pair;
+}
+
 void Swap(Min_Heap *heap, int i, int j){
 	pair<NodeID, int> temp_kv = heap->kv_pair[i];
 	int temp_ptr = heap->ptrs[i];
@@ -176,8 +181,7 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 		}
 	}
 	
-	delete[] heap->ptrs;
-	delete[] heap->kv_pair;
+	FreeHeap(heap);
 
 	return ranking;
 }
@@ -185,35 +189,10 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 void Init(Graph &g, Graph_Info *g_i, int k){
 	g_i->ns = new int[k+1];
 	g_i->ns[k] = g.num_nodes();
-
-	int *d = new int[g.num_nodes()];
-	for(int i = 0; i < g.num_nodes(); i++){
-		d[i] = g.out_degree(i);
-	}
-
-	g_i->d = new int*[k+1];
-	for(int i = 2; i < k; i++){
-		g_i->d[i] = new int[g.num_nodes()];
-	}
-	g_i->d[k] = d;
-
-	g_i->cd = new int[g.num_nodes()+1];
-	g_i->cd[0] = 0;
-	for(int i = 1; i < g.num_nodes() + 1; i++){
-		g_i->cd[i] = g_i->cd[i-1] + g.out_degree(i - 1);
-	}
-
-	g_i->adj_list = new int[g.num_edges()];
-	int index = 0;
-	for(int i = 0; i < g.num_nodes(); i++){
-		for(int neighbor: g.out_neigh(i)){
-			g_i->adj_list[index++] = neighbor;
-		}
-	}
-
-	g_i->lab = new int[g.num_nodes()];
-	for(int i = 0; i < g.num_nodes(); i++){
-		g_i->lab[i] = k;
+	
+	int *d = (int *)calloc(g.num_nodes(), sizeof(int));
+	for(int i = 0; i < g_i->e; i++){
+		d[g_i->edges[i].source]++;
 	}
 	
 	int *sub = new int[g.num_nodes()];
@@ -221,11 +200,33 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 		sub[i] = i;
 	}
 
+	g_i->d = new int*[k+1];
 	g_i->sub = new int*[k+1];
 	for(int i = 2; i < k; i++){
+		g_i->d[i] = new int[g.num_nodes()];
 		g_i->sub[i] = new int[g.num_nodes()];
 	}
+	g_i->d[k] = d;
 	g_i->sub[k] = sub;
+	free(sub);
+	
+	g_i->cd = new int[g.num_nodes()+1];
+	g_i->cd[0] = 0;
+	for(int i = 1; i < g.num_nodes() + 1; i++){
+		g_i->cd[i] = g_i->cd[i-1] + d[i - 1];
+		d[i-1] = 0;
+	}
+
+	g_i->adj_list = new int[g.num_edges()];
+	for(int i = 0; i < g_i->e; i++){
+		g_i->adj_list[g_i->cd[g_i->edges[i].source] + d[g_i->edges[i].source]++] = g_i->edges[i].dest;
+	}	
+	free(d);
+
+	g_i->lab = new int[g.num_nodes()];
+	for(int i = 0; i < g.num_nodes(); i++){
+		g_i->lab[i] = k;
+	}
 }
 
 void FreeMem(Graph_Info *g_i, int k){
@@ -233,6 +234,7 @@ void FreeMem(Graph_Info *g_i, int k){
 	delete[] g_i->cd;
 	delete[] g_i->adj_list;
 	delete[] g_i->lab;
+	delete[] g_i->edges;
 
 	for(int i = 2; i < k+1; i++){
 		delete []g_i->d[i];
@@ -336,7 +338,7 @@ int main(int argc, char* argv[]){
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
 	cout << "Adjacency List: ";
-	for(int i = 0; i < dag.num_edges(); i++){
+	for(int i = 0; i < graph_struct.e; i++){
 		cout << graph_struct.adj_list[i] << " ";  
 	}
 	cout << endl;
