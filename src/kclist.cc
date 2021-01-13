@@ -208,7 +208,6 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	}
 	g_i->d[k] = d;
 	g_i->sub[k] = sub;
-	free(sub);
 	
 	g_i->cd = new int[g.num_nodes()+1];
 	g_i->cd[0] = 0;
@@ -220,8 +219,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	g_i->adj_list = new int[g.num_edges()];
 	for(int i = 0; i < g_i->e; i++){
 		g_i->adj_list[g_i->cd[g_i->edges[i].source] + d[g_i->edges[i].source]++] = g_i->edges[i].dest;
-	}	
-	free(d);
+	}
 
 	g_i->lab = new int[g.num_nodes()];
 	for(int i = 0; i < g.num_nodes(); i++){
@@ -242,7 +240,7 @@ void FreeMem(Graph_Info *g_i, int k){
 	}
 }
 
-void Listing(Graph_Info *g_i, int l, int *n, double *loop_time){
+void Listing(Graph_Info *g_i, int l, int *n){
 	int i, j, k, bound;
 	int node, neighbor, u;
 
@@ -290,17 +288,13 @@ void Listing(Graph_Info *g_i, int l, int *n, double *loop_time){
 					//(g_i->d[l-1][j])++;
 				}
 				else{
-					//auto start = std::chrono::system_clock::now();
 					g_i->adj_list[k--] = g_i->adj_list[--bound];
 					g_i->adj_list[bound] = neighbor;
-					//auto end = std::chrono::system_clock::now();
-					//auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-					//(*loop_time) += elapsed.count();
 				}
 			}
 		}
 
-		Listing(g_i, l-1, n, loop_time);
+		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
 		for(j = 0; j < g_i->ns[l-1]; j++){
@@ -326,33 +320,25 @@ int main(int argc, char* argv[]){
 	Min_Heap bin_heap;
 	vector<int> ranking = OrdCore(g, &bin_heap);
 	Relabel(&graph_struct, ranking);
-	Graph dag = b.MakeDagFromRank(g, ranking);
+	//Graph dag = b.MakeDagFromRank(g, ranking);
 	
 	//Graph dag = b.MakeDag(g);
 	int k = atoi(argv[3]);
 
-	Init(dag, &graph_struct, k);
-
+	Init(g, &graph_struct, k);
+	
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
-	cout << "Adjacency List: ";
-	for(int i = 0; i < graph_struct.e; i++){
-		cout << graph_struct.adj_list[i] << " ";  
-	}
-	cout << endl;
-
 	start = std::chrono::system_clock::now();
 	int n = 0;
-	double loop_time = 0;
-	Listing(&graph_struct, k, &n, &loop_time);
+	Listing(&graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
 	FreeMem(&graph_struct, k);
 	cout << "Number of cliques: " << n << endl;
-	//cout << "Total time to calculate degrees: " << loop_time << "s" << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
