@@ -185,12 +185,6 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 		ranking.push_back(rank_arr[i]);
 	}
 	delete[] rank_arr;
-	
-	cout << "Ranking: ";
-	for(auto elem: ranking){
-		cout << elem << " ";
-	}
-	cout << endl;
 
 	return ranking;
 }
@@ -335,8 +329,7 @@ int main(int argc, char* argv[]){
 	int k = atoi(argv[3]);
 
 	Init(g, &graph_struct, k);
-
-	
+	/*	
 	cout << "Number of nodes = " << graph_struct.ns[k] << endl;
 	cout << "Number of edges = " << graph_struct.e << endl;
 			
@@ -369,6 +362,7 @@ int main(int argc, char* argv[]){
 		cout << graph_struct.lab[i] << " ";
 	}
 	cout << endl;
+	*/
 
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
