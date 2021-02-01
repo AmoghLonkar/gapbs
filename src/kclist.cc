@@ -156,31 +156,25 @@ void MkHeap(Graph &g, Min_Heap *heap){
 
 vector<int> OrdCore(Graph &g, Min_Heap *heap){
 
-	//vector<int> ranking(g.num_nodes());
-	int *rank_arr = new int[g.num_nodes()];
+	vector<int> ranking(g.num_nodes());
 	int n = g.num_nodes();
 	int r = 0;
 
 	MkHeap(g, heap);
 	for(int i = 0; i < n; i++){
 		pair<NodeID, int> root = PopMin(heap);
-		rank_arr[root.first] = n - (++r);
+		ranking[root.first] = n - (++r);
 		for(NodeID neighbor: g.out_neigh(root.first)){
 			UpdateHeap(heap, neighbor);
 		}
 	}
-	
-	vector<int> ranking;
-	for(int i = 0; i < n; i++){
-		ranking.push_back(rank_arr[i]);
-	}
-	
+	/*
 	cout << "Ranking: ";
 	for(auto elem: ranking){
 		cout << elem << " ";
 	}
 	cout << endl;
-	delete[] rank_arr;
+	*/
 
 	return ranking;
 }
@@ -221,12 +215,9 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 }
 
 void Listing(Graph_Info *g_i, int l, int *n){
-	int i, j, k, bound;
-	int node, neighbor, u;
-
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
-			u = g_i->sub[2][i];
+			NodeID u = g_i->sub[2][i];
 			(*n) += g_i->d[2][u];
 		}
 		return;	
@@ -234,14 +225,14 @@ void Listing(Graph_Info *g_i, int l, int *n){
 	
 	// For each node in g_l
 	// Initializing vertex-induced subgraph
-	for(i = 0; i < g_i->ns[l]; i++){
-		u = g_i->sub[l][i];
+	for(int i = 0; i < g_i->ns[l]; i++){
+		NodeID u = g_i->sub[l][i];
 		g_i->ns[l-1] = 0;
 		
-		bound = g_i->cd[u] + g_i->d[l][u];
+		int bound = g_i->cd[u] + g_i->d[l][u];
 
-		for(j = g_i->cd[u]; j < bound; j++){
-			neighbor = g_i->adj_list[j];
+		for(int j = g_i->cd[u]; j < bound; j++){
+			NodeID neighbor = g_i->adj_list[j];
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
@@ -252,15 +243,14 @@ void Listing(Graph_Info *g_i, int l, int *n){
 			}
 		}
 		
-
 		// Computing degrees
-		for(j = 0; j < g_i->ns[l-1]; j++){
-			node = g_i->sub[l-1][j];
+		for(int j = 0; j < g_i->ns[l-1]; j++){
+			NodeID node = g_i->sub[l-1][j];
 			bound = g_i->cd[node] + g_i->d[l][node];
 			
 			// Looking at edges between nodes
-			for(k = g_i->cd[node]; k < bound; k++){
-				neighbor = g_i->adj_list[k];
+			for(int k = g_i->cd[node]; k < bound; k++){
+				NodeID neighbor = g_i->adj_list[k];
 				
 				// Node is present in the subgraph
 				if(g_i->lab[neighbor] == l-1){
@@ -277,8 +267,8 @@ void Listing(Graph_Info *g_i, int l, int *n){
 		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
-		for(j = 0; j < g_i->ns[l-1]; j++){
-			node = g_i->sub[l-1][j];
+		for(int j = 0; j < g_i->ns[l-1]; j++){
+			NodeID node = g_i->sub[l-1][j];
 			g_i->lab[node] = l;
 		}
 	}
@@ -306,40 +296,6 @@ int main(int argc, char* argv[]){
 	int k = atoi(argv[3]);
 
 	Init(g, &graph_struct, k);
-		
-	cout << "Number of nodes = " << graph_struct.ns[k] << endl;
-	cout << "Number of edges = " << graph_struct.e << endl;
-			
-	cout << "Nodes: ";
-	for(int i = 0; i < graph_struct.ns[k]; i++){
-		cout << graph_struct.sub[k][i] << " ";
-	}
-	cout << endl;
-	
-	cout << "Degrees: ";
-	for(int i = 0; i < graph_struct.ns[k]; i++){
-		cout << graph_struct.d[k][i] << " ";
-	}
-	cout << endl;
-
-	cout << "Cumulative Degrees: ";
-	for(int i = 0; i < graph_struct.ns[k]+1; i++){
-		cout << graph_struct.cd[i] << " ";
-	}
-	cout << endl;
-
-	cout << "Adjacency List: ";
-	for(int i = 0; i < graph_struct.e; i++){
-		cout << graph_struct.adj_list[i] << " ";
-	}
-	cout << endl;
-	
-	cout << "Labels: ";
-	for(int i = 0; i < graph_struct.ns[k]; i++){
-		cout << graph_struct.lab[i] << " ";
-	}
-	cout << endl;
-	
 
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
@@ -351,7 +307,6 @@ int main(int argc, char* argv[]){
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
-	//FreeMem(&graph_struct, k);
 	cout << "Number of cliques: " << n << endl;
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
