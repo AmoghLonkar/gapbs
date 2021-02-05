@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include<fstream>
 #include <vector>
 #include <chrono>
 #include <string>
@@ -168,13 +169,24 @@ vector<int> OrdCore(Graph &g, Min_Heap *heap){
 			UpdateHeap(heap, neighbor);
 		}
 	}
-	/*
-	cout << "Ranking: ";
+	/*	
 	for(auto elem: ranking){
-		cout << elem << " ";
+		cout << "Ranking: " << elem << endl;
 	}
-	cout << endl;
 	*/
+
+	return ranking;
+}
+
+vector<int> GetRankFromFile(string fileName){
+	ifstream rankFile(fileName);
+	string temp;
+	vector<int> ranking;
+	while(getline(rankFile, temp)){
+		ranking.push_back(stoi(temp));
+	}
+	rankFile.close();
+	reverse(ranking.begin(), ranking.end());
 
 	return ranking;
 }
@@ -214,7 +226,7 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 	g_i->lab = lab;
 }
 
-void Listing(Graph_Info *g_i, int l, int *n){
+void Listing(Graph_Info *g_i, int l, unsigned int *n){
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
 			NodeID u = g_i->sub[2][i];
@@ -288,12 +300,13 @@ int main(int argc, char* argv[]){
 	auto start = std::chrono::system_clock::now();
 	
 	Min_Heap bin_heap;
-	vector<int> ranking = OrdCore(g, &bin_heap);
+	//vector<int> ranking = OrdCore(g, &bin_heap);
+	vector<int> ranking = GetRankFromFile(argv[3]);
 	Relabel(&graph_struct, ranking);
 	//Graph dag = b.MakeDagFromRank(g, ranking);
 	
 	//Graph dag = b.MakeDag(g);
-	int k = atoi(argv[3]);
+	int k = atoi(argv[4]);
 
 	Init(g, &graph_struct, k);
 
@@ -302,7 +315,7 @@ int main(int argc, char* argv[]){
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
 	start = std::chrono::system_clock::now();
-	int n = 0;
+	unsigned int n = 0;
 	Listing(&graph_struct, k, &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
