@@ -186,8 +186,7 @@ vector<int> GetRankFromFile(string fileName){
 		ranking.push_back(stoi(temp));
 	}
 	rankFile.close();
-	reverse(ranking.begin(), ranking.end());
-
+		
 	return ranking;
 }
 
