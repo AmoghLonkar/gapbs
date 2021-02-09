@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
-#include<fstream>
+#include <fstream>
+#include <functional>
 #include <vector>
 #include <chrono>
 #include <string>
@@ -66,115 +67,39 @@ void Relabel(Graph_Info *g_i, vector<int> ranking){
 	}
 }
 
-void InitHeap(Min_Heap *heap, int num_nodes){
-	heap->n = 0;
-
-	vector<int> ptrs(num_nodes, -1);
-	heap->ptrs = ptrs;
-	
-	vector<pair<NodeID, int>> kv_pair(num_nodes, make_pair(0, 0));
-	heap->kv_pair = kv_pair;
-}
-
-void Swap(Min_Heap *heap, int i, int j){
-	pair<NodeID, int> temp_kv = heap->kv_pair[i];
-	int temp_ptr = heap->ptrs[temp_kv.first];
-
-	heap->ptrs[heap->kv_pair[i].first] = heap->ptrs[heap->kv_pair[j].first];
-	heap->kv_pair[i] = heap->kv_pair[j];
-
-	heap->ptrs[heap->kv_pair[j].first] = temp_ptr;
-	heap->kv_pair[j] = temp_kv;
-}
-
-void BubbleUp(Min_Heap *heap, int i){
-	int j = (i-1)/2;
-	while(i > 0){
-		if(heap->kv_pair[j].second > heap->kv_pair[i].second){
-			Swap(heap, i, j);
-			i = j;
-			j = (i - 1)/2;
-		}
-		else{
-			break;
-		}
-		
-	}
-}
-
-void BubbleDown(Min_Heap *heap){
-	int i = 0;
-	int j;
-	int j1 = 1;
-	int j2 = 2;
-
-	while(j1 < heap->n){
-		j = ( (j2 < heap->n) && (heap->kv_pair[j2].second<heap->kv_pair[j1].second) ) ? j2:j1;
-		if(heap->kv_pair[j].second < heap->kv_pair[i].second){
-			Swap(heap, i, j);
-			i = j;
-			j1 = 2*i + 1;
-			j2 = j1 + 1;
-			continue;
-		}
-		break;
-	}
-}
-
-void Insert(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
-	heap->ptrs[nodeDegPair.first] = (heap->n)++;
-	heap->kv_pair[heap->n - 1] = nodeDegPair;
-	BubbleUp(heap, heap->n - 1);
-}
-
-void UpdateHeap(Min_Heap *heap, NodeID node){
-	int ptr = heap->ptrs[node];
-	if(ptr != -1){
-		((heap->kv_pair[ptr]).second)--;
-		BubbleUp(heap, ptr);
-	}	
-}
-
-pair<NodeID, int> PopMin(Min_Heap *heap){
-	pair<NodeID, int> root = heap->kv_pair[0];
-	heap->ptrs[root.first] = -1;
-	heap->kv_pair[0] = heap->kv_pair[--(heap->n)];
-	heap->ptrs[heap->kv_pair[0].first] = 0;
-	BubbleDown(heap);
-
-	return root;
-}
-
-void MkHeap(Graph &g, Min_Heap *heap){
-	InitHeap(heap, g.num_nodes());
-	
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		pair<NodeID, int> nodeDegPair = make_pair(u, g.out_degree(u));
-		Insert(heap, nodeDegPair);
-	}
-	
-}
-
-vector<int> OrdCore(Graph &g, Min_Heap *heap){
-
+vector<int> OrdCore(Graph &g){
 	vector<int> ranking(g.num_nodes());
 	int n = g.num_nodes();
 	int r = 0;
 
-	MkHeap(g, heap);
-	for(int i = 0; i < n; i++){
-		pair<NodeID, int> root = PopMin(heap);
-		ranking[root.first] = n - (++r);
-		for(NodeID neighbor: g.out_neigh(root.first)){
-			UpdateHeap(heap, neighbor);
-		}
+	//Initialize Heap
+	vector<pair<NodeID, int>> nodeDegPairs;
+	for(NodeID u = 0; u < n; u++){
+		nodeDegPairs.push_back(make_pair(u, g.out_degree(u)));
 	}
-	/*	
+	make_heap(nodeDegPairs.begin(), nodeDegPairs.end());
+	sort(nodeDegPairs.begin(), nodeDegPairs.end(), [](const pair<NodeID, int> &left, const pair<NodeID, int> &right) { return left.second < right.second; });
+
+	for(int i = 0; i < n; i++){
+		pair<NodeID, int> root = nodeDegPairs.front();
+		ranking[root.first] = n - (++r);
+		
+		for(NodeID neighbor: g.out_neigh(root.first)){
+			auto it = find_if( nodeDegPairs.begin(), nodeDegPairs.end(), [&neighbor](const pair<NodeID, int>& element){ return element.first == neighbor;} );
+			it->second--;
+		}
+		
+		pop_heap(nodeDegPairs.begin(), nodeDegPairs.end());
+		nodeDegPairs.pop_back();
+		
+		sort_heap(nodeDegPairs.begin(), nodeDegPairs.end(), [](const pair<NodeID, int> &left, const pair<NodeID, int> &right) { return left.second < right.second; });
+	}
+	
+	/*
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
 	}
 	*/
-
 	return ranking;
 }
 
@@ -300,15 +225,21 @@ int main(int argc, char* argv[]){
 	
 	Min_Heap bin_heap;
 	//vector<int> ranking = OrdCore(g, &bin_heap);
-	vector<int> ranking = GetRankFromFile(argv[3]);
+	vector<int> ranking = OrdCore(g);
+	//vector<int> ranking = GetRankFromFile(argv[3]);
 	Relabel(&graph_struct, ranking);
 	//Graph dag = b.MakeDagFromRank(g, ranking);
 	
 	//Graph dag = b.MakeDag(g);
-	int k = atoi(argv[4]);
+	int k = atoi(argv[3]);
 
 	Init(g, &graph_struct, k);
-
+	
+	/*	
+	for(int i = 0; i < graph_struct.e; i++){
+		cout << "Adjacency list: " << graph_struct.adj_list[i] << endl; 
+	}
+	*/
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
