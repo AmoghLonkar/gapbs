@@ -34,12 +34,6 @@ struct Graph_Info{
 	vector<int> lab;
 };
 
-struct Min_Heap{
-	int n;
-	vector<int> ptrs;
-	vector<pair<NodeID, int>> kv_pair;
-};
-
 void GetEdges(Graph &g, Graph_Info *g_i){
 	vector<Edge> edges;
 	g_i->e = 0;
@@ -95,11 +89,10 @@ vector<int> OrdCore(Graph &g){
 		sort_heap(nodeDegPairs.begin(), nodeDegPairs.end(), [](const pair<NodeID, int> &left, const pair<NodeID, int> &right) { return left.second < right.second; });
 	}
 	
-	/*
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
 	}
-	*/
+	
 	return ranking;
 }
 
