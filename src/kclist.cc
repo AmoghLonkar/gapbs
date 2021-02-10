@@ -61,33 +61,45 @@ void Relabel(Graph_Info *g_i, vector<int> ranking){
 	}
 }
 
-vector<int> OrdCore(Graph &g){
-	vector<int> ranking(g.num_nodes());
-	int n = g.num_nodes();
-	int r = 0;
-
-	//Initialize Heap
+vector<pair<NodeID, int>> InitNodeDegPair(Graph &g){
 	vector<pair<NodeID, int>> nodeDegPairs;
-	for(NodeID u = 0; u < n; u++){
+	for(NodeID u = 0; u < g.num_nodes(); u++){
 		nodeDegPairs.push_back(make_pair(u, g.out_degree(u)));
 	}
-	make_heap(nodeDegPairs.begin(), nodeDegPairs.end());
-	sort(nodeDegPairs.begin(), nodeDegPairs.end(), [](const pair<NodeID, int> &left, const pair<NodeID, int> &right) { return left.second < right.second; });
+	
+	return nodeDegPairs;
+}
 
-	for(int i = 0; i < n; i++){
-		pair<NodeID, int> root = nodeDegPairs.front();
-		ranking[root.first] = n - (++r);
-		
-		for(NodeID neighbor: g.out_neigh(root.first)){
-			auto it = find_if( nodeDegPairs.begin(), nodeDegPairs.end(), [&neighbor](const pair<NodeID, int>& element){ return element.first == neighbor;} );
-			it->second--;
-		}
-		
-		pop_heap(nodeDegPairs.begin(), nodeDegPairs.end());
-		nodeDegPairs.pop_back();
-		
-		sort_heap(nodeDegPairs.begin(), nodeDegPairs.end(), [](const pair<NodeID, int> &left, const pair<NodeID, int> &right) { return left.second < right.second; });
+void Heapify(vector<pair<NodeID, int>> nodeDegPairs, int n, int i){
+	int root = i;
+	int leftChild = 2*i + 1;
+	int rightChild = 2*i + 2;
+
+	if(leftChild < n && nodeDegPairs[leftChild].second < nodeDegPairs[root].second){
+		root = leftChild;
 	}
+	
+	if(rightChild < n && nodeDegPairs[rightChild].second < nodeDegPairs[root].second){
+		root = rightChild;
+	}
+
+	if(root != i){
+		swap(nodeDegPairs[i], nodeDegPairs[root]);
+		Heapify(nodeDegPairs, n, root);
+	}
+}
+
+vector<int> OrdCore(Graph &g){
+	vector<int> ranking(g.num_nodes());
+	int numNodes = g.num_nodes();
+	int r = 0;
+
+	vector<pair<NodeID, int>> nodeDegPairs = InitNodeDegPair(g);
+	int n = nodeDegPairs.size();
+	for(int i = n/2 - 1; i >=0; i--){
+		Heapify(nodeDegPairs, n, i);
+	}
+	
 	
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
