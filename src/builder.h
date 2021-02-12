@@ -306,53 +306,23 @@ class BuilderBase {
   }	  
 
   // Relabels (and rebuilds) graph by order of decreasing degree
-  static
   CSRGraph<NodeID_, DestID_, invert> RelabelByRank(
       const CSRGraph<NodeID_, DestID_, invert> &g, std::vector<int> ranking) {
-   
- 
-
-    Timer t;
-    t.Start();
-    typedef std::pair<int64_t, NodeID_> degree_node_p;
-    pvector<degree_node_p> degree_id_pairs(g.num_nodes());
-    #pragma omp parallel for
-    for (NodeID_ n=0; n < g.num_nodes(); n++)
-      degree_id_pairs[n] = std::make_pair(g.out_degree(n), n);
-    std::sort(degree_id_pairs.begin(), degree_id_pairs.end(),
-              std::greater<degree_node_p>());
-    
-    pvector<NodeID_> degrees(g.num_nodes());
-    pvector<NodeID_> new_ids(g.num_nodes());
-
-    for (NodeID_ u=0; u < g.num_nodes(); u++) {
+      EdgeList el;
+      for (NodeID_ u=0; u < g.num_nodes(); u++) {
       for(NodeID_ v: g.out_neigh(u)){
         if(ranking[u] < ranking[v]){
-          new_ids[u] = ranking[v];
-          new_ids[v] = ranking[u];
+          el.push_back(Edge(ranking[v], ranking[u]));
         }
         else{
-          new_ids[u] = ranking[u];
-          new_ids[v] = ranking[v];
+          el.push_back(Edge(ranking[u], ranking[v]));
         }
-
-        degrees[u] = g.out_degree(u);
-        degrees[v] = g.out_degree(v);
       }
     }
 
-    pvector<SGOffset> offsets = ParallelPrefixSum(degrees);
-    DestID_* neighs = new DestID_[offsets[g.num_nodes()]];
-    DestID_** index = CSRGraph<NodeID_, DestID_>::GenIndex(offsets, neighs);
-    #pragma omp parallel for
-    for (NodeID_ u=0; u < g.num_nodes(); u++) {
-      for (NodeID_ v : g.out_neigh(u))
-        neighs[offsets[new_ids[u]]++] = new_ids[v];
-      std::sort(index[new_ids[u]], index[new_ids[u]+1]);
-    }
-    t.Stop();
-    PrintTime("Relabel", t.Seconds());
-    return CSRGraph<NodeID_, DestID_, invert>(g.num_nodes(), index, neighs);
+    CSRGraph<NodeID_, DestID_, invert> dag;
+	  dag = MakeGraphFromEL(el);
+    return SquishGraph(dag);
   }
 
 };
