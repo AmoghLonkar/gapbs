@@ -245,8 +245,8 @@ int main(int argc, char* argv[]){
 	*/
 
 	Relabel(&graph_struct, ranking);
-	//Graph dag = b.RelabelByRank(g, ranking);
-	//dag.PrintTopology();
+	Graph dag = b.RelabelByRank(g, ranking);
+	dag.PrintTopology();
 	Init(g, &graph_struct, cli.clique_size());
 	
 	/*	
