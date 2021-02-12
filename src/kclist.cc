@@ -100,11 +100,6 @@ vector<int> OrdCore(Graph &g){
 		Heapify(nodeDegPairs, n, i);
 	}
 	
-	
-	for(auto elem: ranking){
-		cout << "Ranking: " << elem << endl;
-	}
-	
 	return ranking;
 }
 
@@ -215,30 +210,41 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 	}
 }
 
+void PrintCliqueCount(int k, unsigned int *n){
+	cout << "Number of " << k <<"-cliques: " << n << endl;
+}
+
+void ListingVerifier(){
+	cout << "Verifier has not been implemented yet" << endl;
+}
+
 int main(int argc, char* argv[]){
-	CLBase cli(argc, argv, "subgraph isomorphism");
+	CLKClique cli(argc, argv, "k-clique counting", 3, "");
 	if (!cli.ParseArgs()){
 		return -1;
 	}
-
+	
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	Graph_Info graph_struct;
 	GetEdges(g, &graph_struct);
 	
 	auto start = std::chrono::system_clock::now();
-	
-	Min_Heap bin_heap;
-	//vector<int> ranking = OrdCore(g, &bin_heap);
-	vector<int> ranking = OrdCore(g);
-	//vector<int> ranking = GetRankFromFile(argv[3]);
+	vector<int> ranking;
+	if(cli.file_name() == ""){
+		ranking = OrdCore(g);
+	}
+	else{
+		ranking = GetRankFromFile(cli.file_name());
+	}
+
+	for(auto elem: ranking){
+		cout << "Ranking: " << elem << endl;
+	}
 	Relabel(&graph_struct, ranking);
 	//Graph dag = b.MakeDagFromRank(g, ranking);
-	
-	//Graph dag = b.MakeDag(g);
-	int k = atoi(argv[3]);
 
-	Init(g, &graph_struct, k);
+	Init(g, &graph_struct, cli.clique_size());
 	
 	/*	
 	for(int i = 0; i < graph_struct.e; i++){
@@ -251,11 +257,12 @@ int main(int argc, char* argv[]){
 	
 	start = std::chrono::system_clock::now();
 	unsigned int n = 0;
-	Listing(&graph_struct, k, &n);
+	Listing(&graph_struct, cli.clique_size(), &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
-	cout << "Number of cliques: " << n << endl;
+	PrintCliqueCount(cli.clique_size(), &n);
+	//BenchmarkKernel(cli, g, Listing, PrintCliqueCount, ListingVerifier);
 	cout << "Time to calculate possible subgraph isomorphisms: " <<elapsed.count() << "s" << endl;
 	return 0;
 }
