@@ -325,28 +325,41 @@ class BuilderBase {
 	return SquishGraph(dag);
   }	  
 
-  CSRGraph<NodeID_, DestID_, invert> InducedSubgraph(
-	        const CSRGraph<NodeID_, DestID_, invert> &g, NodeID_ vertex) {
-  	EdgeList el;
-	
-	for(NodeID_ n: g.out_neigh(vertex)){
-		std::vector<NodeID_> intersection(g.out_degree(vertex) + g.out_degree(n));		
-		auto new_end = std::set_intersection(g.out_neigh(vertex).begin(),
-						     g.out_neigh(vertex).end(),
-		                                     g.out_neigh(n).begin(),
-						     g.out_neigh(n).end(),				
-						     intersection.begin());
-		intersection.resize(new_end - intersection.begin());
-			
-		for(NodeID_ common: intersection){
-			el.push_back(Edge(n, common));
-		}
-	}
-
-	CSRGraph<NodeID_, DestID_, invert> induced;
-	induced = MakeGraphFromEL(el);
-	return SquishGraph(induced);
-  }	  
+  // Relabels (and rebuilds) graph by order of decreasing degree
+  static
+  CSRGraph<NodeID_, DestID_, invert> RelabelByRank(
+      const CSRGraph<NodeID_, DestID_, invert> &g, std::vector<int> ranking) {
+    Timer t;
+    t.Start();
+    pvector<NodeID_> degrees(g.num_nodes());
+    pvector<NodeID_> new_ids(g.num_nodes());
+    //#pragma omp parallel for
+    for (NodeID_ u=0; u < g.num_nodes(); u++) {
+      for(NodeID_ v: g.out_neigh(u)){
+        if(ranking[u] < ranking[v]){
+          new_ids[u] = ranking[v];
+          new_ids[v] = ranking[u];
+        }
+        else{
+          new_ids[u] = ranking[u];
+          new_ids[v] = ranking[v];
+        }
+      }
+    }
+    
+    pvector<SGOffset> offsets = ParallelPrefixSum(degrees);
+    DestID_* neighs = new DestID_[offsets[g.num_nodes()]];
+    DestID_** index = CSRGraph<NodeID_, DestID_>::GenIndex(offsets, neighs);
+    #pragma omp parallel for
+    for (NodeID_ u=0; u < g.num_nodes(); u++) {
+      for (NodeID_ v : g.out_neigh(u))
+        neighs[offsets[new_ids[u]]++] = new_ids[v];
+      std::sort(index[new_ids[u]], index[new_ids[u]+1]);
+    }
+    t.Stop();
+    PrintTime("Relabel", t.Seconds());
+    return CSRGraph<NodeID_, DestID_, invert>(g.num_nodes(), index, neighs);
+  }
 
 };
 
