@@ -211,7 +211,7 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 }
 
 void PrintCliqueCount(int k, unsigned int *n){
-	cout << "Number of " << k <<"-cliques: " << n << endl;
+	cout << "Number of " << k <<"-cliques: " << *n << endl;
 }
 
 void ListingVerifier(){
@@ -238,12 +238,15 @@ int main(int argc, char* argv[]){
 		ranking = GetRankFromFile(cli.file_name());
 	}
 
+	/*
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
 	}
-	Relabel(&graph_struct, ranking);
-	//Graph dag = b.MakeDagFromRank(g, ranking);
+	*/
 
+	Relabel(&graph_struct, ranking);
+	//Graph dag = b.RelabelByRank(g, ranking);
+	//dag.PrintTopology();
 	Init(g, &graph_struct, cli.clique_size());
 	
 	/*	
