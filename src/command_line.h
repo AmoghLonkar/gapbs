@@ -257,14 +257,14 @@ class CLKClique : public CLApp {
  public:
   CLKClique(int argc, char** argv, std::string name, int clique_size) :
     CLApp(argc, argv, name), clique_size_(clique_size) {
-    get_args_ += "cs";
-    AddHelpLine('cs', "cs", "clique size",
+    get_args_ += "c";
+    AddHelpLine('c', "", "clique size",
                 std::to_string(clique_size_));
   }
 
   void HandleArg(signed char opt, char* opt_arg) override {
     switch (opt) {
-      case 'cs': clique_size_ = atoi(opt_arg);            break;
+      case 'c': clique_size_ = atoi(opt_arg);            break;
       default: CLApp::HandleArg(opt, opt_arg);
     }
   }
