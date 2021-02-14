@@ -115,40 +115,39 @@ void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(NodeID neighbor: g.out_neigh(u)){
-			if(g_i->lab[neighbor] == l){
-				g_i->lab[neighbor] = l-1;
+		for(NodeID v: g.out_neigh(u)){
+			if(g_i->lab[v] == l){
+				g_i->lab[v] = l-1;
 				
 				// Adding nodes to subgraph
-				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
+				g_i->sub[l-1][g_i->ns[l-1]++] = v;
 			}
 			
 		}
 		
 		// Only proceed if there is potential for a clique
-		if(g_i->ns[l-1] >= l - 1){
-			// Building subgraph
-			for(int j = 0; j < g_i->ns[l-1]; j++){
-				g_i->d[l-1][j] = 0;
-				NodeID node = g_i->sub[l-1][j];
+		//if(g_i->ns[l-1] >= l - 1){
+		// Building subgraph
+		for(int j = 0; j < g_i->ns[l-1]; j++){
+			g_i->d[l-1][j] = 0;
+			NodeID u = g_i->sub[l-1][j];
 
-				// Looking at edges between nodes 
-				for(NodeID neighbor: g.out_neigh(node)){
-					// Node is present in the subgraph
-					if(g_i->lab[neighbor] == l-1){
-						(g_i->d[l-1][j])++;
-					}
+			// Looking at edges between nodes 
+			for(NodeID v: g.out_neigh(u)){
+				// Node is present in the subgraph
+				if(g_i->lab[v] == l-1){
+					(g_i->d[l-1][j])++;
 				}
 			}
 		}
+		//}
 		
 		Listing(g, g_i, l-1, n);
 		
 		// Resetting labels	
-		for(int k = 0; k < g_i->ns[l-1]; k++){
-			NodeID node = g_i->sub[l-1][k];
+		for(int i = 0; i < g_i->ns[l-1]; i++){
+			NodeID node = g_i->sub[l-1][i];
 			g_i->lab[node] = l;
-			g_i->d[l-1][k] = 0; 
 		}
 	}
 
