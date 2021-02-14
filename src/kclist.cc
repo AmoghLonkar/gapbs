@@ -101,15 +101,15 @@ void Init(Graph &g, Graph_Info *g_i, int k){
 }
 
 void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
+
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
-			NodeID u = g_i->sub[2][i];
-			(*n) += g_i->d[2][u];
+			(*n) += g_i->d[2][i];
 		}
 		return;	
 	}
-
-		// For each node in g_l
+	
+	// For each node in g_l
 	// Initializing vertex-induced subgraph
 	for(int i = 0; i < g_i->ns[l]; i++){
 		g_i->ns[l-1] = 0;
@@ -151,6 +151,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
 			g_i->d[l-1][k] = 0; 
 		}
 	}
+
 }
 
 void PrintCliqueCount(int k, unsigned int *n){
