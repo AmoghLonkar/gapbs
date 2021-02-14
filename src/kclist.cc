@@ -108,54 +108,47 @@ void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
 		}
 		return;	
 	}
-	
-	// For each node in g_l
+
+		// For each node in g_l
 	// Initializing vertex-induced subgraph
 	for(int i = 0; i < g_i->ns[l]; i++){
-		NodeID u = g_i->sub[l][i];
 		g_i->ns[l-1] = 0;
-		
-		int bound = g_i->cd[u] + g_i->d[l][u];
 
-		for(int j = g_i->cd[u]; j < bound; j++){
-			NodeID neighbor = g_i->adj_list[j];
+		NodeID u = g_i->sub[l][i];
+		for(NodeID neighbor: g.out_neigh(u)){
 			if(g_i->lab[neighbor] == l){
 				g_i->lab[neighbor] = l-1;
 				
 				// Adding nodes to subgraph
 				g_i->sub[l-1][g_i->ns[l-1]++] = neighbor;
-				g_i->d[l-1][neighbor] = 0;
-				//g_i->d[l-1][g_i->ns[l-1]++] = 0;
+			}
+			
+		}
+		
+		// Only proceed if there is potential for a clique
+		if(g_i->ns[l-1] >= l - 1){
+			// Building subgraph
+			for(int j = 0; j < g_i->ns[l-1]; j++){
+				g_i->d[l-1][j] = 0;
+				NodeID node = g_i->sub[l-1][j];
+
+				// Looking at edges between nodes 
+				for(NodeID neighbor: g.out_neigh(node)){
+					// Node is present in the subgraph
+					if(g_i->lab[neighbor] == l-1){
+						(g_i->d[l-1][j])++;
+					}
+				}
 			}
 		}
 		
-		// Computing degrees
-		for(int j = 0; j < g_i->ns[l-1]; j++){
-			NodeID node = g_i->sub[l-1][j];
-			bound = g_i->cd[node] + g_i->d[l][node];
-			
-			// Looking at edges between nodes
-			for(int k = g_i->cd[node]; k < bound; k++){
-				NodeID neighbor = g_i->adj_list[k];
-				
-				// Node is present in the subgraph
-				if(g_i->lab[neighbor] == l-1){
-					(g_i->d[l-1][node])++;
-					//(g_i->d[l-1][j])++;
-				}
-				else{
-					g_i->adj_list[k--] = g_i->adj_list[--bound];
-					g_i->adj_list[bound] = neighbor;
-				}
-			}
-		}
-
 		Listing(g, g_i, l-1, n);
 		
 		// Resetting labels	
-		for(int j = 0; j < g_i->ns[l-1]; j++){
-			NodeID node = g_i->sub[l-1][j];
+		for(int k = 0; k < g_i->ns[l-1]; k++){
+			NodeID node = g_i->sub[l-1][k];
 			g_i->lab[node] = l;
+			g_i->d[l-1][k] = 0; 
 		}
 	}
 }
@@ -177,7 +170,6 @@ int main(int argc, char* argv[]){
 	Builder b(cli);
 	Graph g = b.MakeGraph();
 	Graph_Info graph_struct;
-	GetEdges(g, &graph_struct);
 	
 	auto start = std::chrono::system_clock::now();
 	vector<int> ranking;
@@ -194,7 +186,6 @@ int main(int argc, char* argv[]){
 	}
 	*/
 
-	Relabel(&graph_struct, ranking);
 	Graph dag = b.RelabelByRank(g, ranking);
 	Init(dag, &graph_struct, cli.clique_size());
 
