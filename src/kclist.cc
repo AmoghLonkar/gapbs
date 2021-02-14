@@ -18,48 +18,12 @@
 
 using namespace std;
 
-struct Edge{
-	NodeID source;
-	NodeID dest;
-};
-
 struct Graph_Info{
 	vector<int> ns;
-	int e;
-	vector<Edge> edges;
 	vector<vector<int>> d;
-	vector<int> cd;
-	vector<NodeID> adj_list;
 	vector<vector<NodeID>> sub;
 	vector<int> lab;
 };
-
-void GetEdges(Graph &g, Graph_Info *g_i){
-	vector<Edge> edges;
-	g_i->e = 0;
-	for(int i = 0; i < g.num_nodes(); i++){
-		for(NodeID neighbor: g.out_neigh(i)){
-			Edge temp;
-			temp.source = i;
-			temp.dest = neighbor;
-			edges.push_back(temp);
-			g_i->e++;
-		}	
-	}
-	g_i->edges = edges;
-}
-
-void Relabel(Graph_Info *g_i, vector<int> ranking){
-	for(int i = 0; i < g_i->e; i++){
-		int source_rank = ranking[g_i->edges[i].source];
-		int dest_rank = ranking[g_i->edges[i].dest];
-		if(source_rank < dest_rank){
-			swap(source_rank, dest_rank);
-		}
-		g_i->edges[i].source = source_rank;
-		g_i->edges[i].dest = dest_rank;
-	}
-}
 
 vector<pair<NodeID, int>> InitNodeDegPair(Graph &g){
 	vector<pair<NodeID, int>> nodeDegPairs;
