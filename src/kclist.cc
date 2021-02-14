@@ -117,40 +117,26 @@ vector<int> GetRankFromFile(string fileName){
 
 void Init(Graph &g, Graph_Info *g_i, int k){
 	vector<int> ns(k+1, 0);
-       	ns[k] = g.num_nodes();	
+    ns[k] = g.num_nodes();	
 	g_i->ns = ns;
 
 	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
-	for(NodeID i = 0; i < g_i->e; i++){
-		d[k][g_i->edges[i].source]++;
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		d[k][u] = g.out_degree(u);
 	}
+	g_i->d = d;
 	
 	vector<vector<NodeID>> sub(k+1, vector<NodeID>(g.num_nodes(), 0));
-	for(NodeID i = 0; i < g.num_nodes(); i++){
-		sub[k][i] = i; 
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		sub[k][u] = u; 
 	}
 	g_i->sub = sub;	
-
-	vector<int> cd(g.num_nodes() + 1, 0);
-	for(NodeID i = 1; i < g.num_nodes() + 1; i++){
-		cd[i] = cd[i-1] + d[k][i-1];
-		d[k][i-1] = 0;
-	}
-	g_i->cd = cd;
-	
-	vector<NodeID> adj(g.num_edges(), 0);
-	for(int i = 0; i < g_i->e; i++){
-		adj[g_i->cd[g_i->edges[i].source] + d[k][g_i->edges[i].source]++] = g_i->edges[i].dest;
-	}
-
-	g_i->adj_list = adj;
-	g_i->d = d;
 
 	vector<int> lab(g.num_nodes(), k);
 	g_i->lab = lab;
 }
 
-void Listing(Graph_Info *g_i, int l, unsigned int *n){
+void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
 			NodeID u = g_i->sub[2][i];
@@ -200,7 +186,7 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 			}
 		}
 
-		Listing(g_i, l-1, n);
+		Listing(g, g_i, l-1, n);
 		
 		// Resetting labels	
 		for(int j = 0; j < g_i->ns[l-1]; j++){
@@ -246,21 +232,15 @@ int main(int argc, char* argv[]){
 
 	Relabel(&graph_struct, ranking);
 	Graph dag = b.RelabelByRank(g, ranking);
-	dag.PrintTopology();
-	Init(g, &graph_struct, cli.clique_size());
-	
-	/*	
-	for(int i = 0; i < graph_struct.e; i++){
-		cout << "Adjacency list: " << graph_struct.adj_list[i] << endl; 
-	}
-	*/
+	Init(dag, &graph_struct, cli.clique_size());
+
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
 	start = std::chrono::system_clock::now();
 	unsigned int n = 0;
-	Listing(&graph_struct, cli.clique_size(), &n);
+	Listing(dag, &graph_struct, cli.clique_size(), &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
