@@ -25,43 +25,76 @@ struct Graph_Info{
 	vector<int> lab;
 };
 
-vector<pair<NodeID, int>> InitNodeDegPair(Graph &g){
+struct Min_Heap{
+	vector<pair<NodeID, int>> nodeDegPairs;
+	vector<int> index;
+};
+
+void InitHeap(Graph &g, Min_Heap *heap){
 	vector<pair<NodeID, int>> nodeDegPairs;
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		nodeDegPairs.push_back(make_pair(u, g.out_degree(u)));
-	}
-	
-	return nodeDegPairs;
+	}	
+	heap->nodeDegPairs = nodeDegPairs;
+
+	vector<NodeID> index(g.num_nodes());
+	iota(std::begin(index), std::end(index), 0);
+	heap->index = index;
 }
 
-void Heapify(vector<pair<NodeID, int>> nodeDegPairs, int n, int i){
+void Heapify(Min_Heap *heap, int n, int i){
 	int root = i;
 	int leftChild = 2*i + 1;
 	int rightChild = 2*i + 2;
 
-	if(leftChild < n && nodeDegPairs[leftChild].second < nodeDegPairs[root].second){
+	if(leftChild < n && heap->nodeDegPairs[leftChild].second < heap->nodeDegPairs[root].second){
 		root = leftChild;
 	}
 	
-	if(rightChild < n && nodeDegPairs[rightChild].second < nodeDegPairs[root].second){
+	if(rightChild < n && heap->nodeDegPairs[rightChild].second < heap->nodeDegPairs[root].second){
 		root = rightChild;
 	}
 
 	if(root != i){
-		swap(nodeDegPairs[i], nodeDegPairs[root]);
-		Heapify(nodeDegPairs, n, root);
+		swap(heap->nodeDegPairs[i], heap->nodeDegPairs[root]);
+		swap(heap->index[i], heap->index[root]);
+		Heapify(heap, n, root);
 	}
 }
 
 vector<int> OrdCore(Graph &g){
 	vector<int> ranking(g.num_nodes());
-	int numNodes = g.num_nodes();
+	int n = g.num_nodes();
 	int r = 0;
 
-	vector<pair<NodeID, int>> nodeDegPairs = InitNodeDegPair(g);
-	int n = nodeDegPairs.size();
-	for(int i = n/2 - 1; i >=0; i--){
-		Heapify(nodeDegPairs, n, i);
+	Min_Heap heap;
+	//Initialize Heap
+	InitHeap(g, &heap);
+
+	//Sort Heap
+	for(int i = n/2 - 1; i >= 0; i--){
+		Heapify(&heap, n, i);
+	}
+	
+	for(int i = n - 1; i >= 0; i--){
+		pair<NodeID, int> root = heap.nodeDegPairs[0];
+		//Update ranking
+		ranking[root.first] = n - (++r);
+
+		//Update degrees for all neighbors of root
+		for(NodeID neighbor: g.out_neigh(root.first)){
+			int index = heap.index[neighbor];
+			heap.nodeDegPairs[index].second--;
+		}
+		
+		//Moving root to the end of the vector and removing
+		swap(heap.nodeDegPairs[0], heap.nodeDegPairs[i]);
+		swap(heap.index[0], heap.index[i]);
+		heap.nodeDegPairs.pop_back();
+		heap.index.pop_back();
+
+		//Re-arranging heap
+		Heapify(&heap, i, 0);
 	}
 	
 	return ranking;
@@ -183,8 +216,8 @@ int main(int argc, char* argv[]){
 	/*
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
-	}
-	*/
+	}*/
+	
 
 	Graph dag = b.RelabelByRank(g, ranking);
 	Init(dag, &graph_struct, cli.clique_size());
