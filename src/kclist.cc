@@ -34,11 +34,10 @@ void InitHeap(Graph &g, Min_Heap *heap){
 	vector<pair<NodeID, int>> nodeDegPairs;
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		nodeDegPairs.push_back(make_pair(u, g.out_degree(u)));
-	}	
+	}		
 	heap->nodeDegPairs = nodeDegPairs;
 
-	vector<NodeID> index(g.num_nodes());
-	iota(std::begin(index), std::end(index), 0);
+	vector<NodeID> index(g.num_nodes(), -1);
 	heap->index = index;
 }
 
@@ -75,6 +74,10 @@ vector<int> OrdCore(Graph &g){
 	for(int i = n/2 - 1; i >= 0; i--){
 		Heapify(&heap, n, i);
 	}
+	//Setting Pointers
+	for(int i = 0; i < g.num_nodes(); i++){
+		heap.index[heap.nodeDegPairs[i].first] = i;
+	}
 	
 	for(int i = n - 1; i >= 0; i--){
 		pair<NodeID, int> root = heap.nodeDegPairs[0];
@@ -90,8 +93,8 @@ vector<int> OrdCore(Graph &g){
 		//Moving root to the end of the vector and removing
 		swap(heap.nodeDegPairs[0], heap.nodeDegPairs[i]);
 		swap(heap.index[0], heap.index[i]);
-		heap.nodeDegPairs.pop_back();
-		heap.index.pop_back();
+		//heap.nodeDegPairs.pop_back();
+		//heap.index.pop_back();
 
 		//Re-arranging heap
 		Heapify(&heap, i, 0);
