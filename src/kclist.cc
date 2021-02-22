@@ -30,18 +30,7 @@ struct Min_Heap{
 	vector<int> index;
 };
 
-void InitHeap(Graph &g, Min_Heap *heap){
-	vector<pair<NodeID, int>> nodeDegPairs;
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		nodeDegPairs.push_back(make_pair(u, g.out_degree(u)));
-	}		
-	heap->nodeDegPairs = nodeDegPairs;
-
-	vector<NodeID> index(g.num_nodes(), -1);
-	heap->index = index;
-}
-
-void Heapify(Min_Heap *heap, int n, int i){
+void BubbleDown(Min_Heap *heap, int n, int i){
 	int root = i;
 	int leftChild = 2*i + 1;
 	int rightChild = 2*i + 2;
@@ -57,8 +46,46 @@ void Heapify(Min_Heap *heap, int n, int i){
 	if(root != i){
 		swap(heap->nodeDegPairs[i], heap->nodeDegPairs[root]);
 		swap(heap->index[i], heap->index[root]);
-		Heapify(heap, n, root);
+		BubbleDown(heap, n, root);
 	}
+}
+
+void BubbleUp(Min_Heap *heap, int i){
+	int parent = (i-1) / 2;
+	if(i > 0 && heap->nodeDegPairs[parent] > heap->nodeDegPairs[i]){
+		swap(heap->nodeDegPairs[i], heap->nodeDegPairs[parent]);
+		swap(heap->index[i], heap->index[parent]);
+		BubbleUp(heap, parent);
+	}
+}
+
+void InsertNode(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
+	heap->index[nodeDegPair.first] = heap->nodeDegPairs.size();
+	
+	heap->nodeDegPairs.push_back(nodeDegPair);
+	BubbleUp(heap, heap->nodeDegPairs.size() - 1);
+}
+
+void InitHeap(Graph &g, Min_Heap *heap){
+	vector<NodeID> index(g.num_nodes(), -1);
+	heap->index = index;
+
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		InsertNode(heap, make_pair(u, g.out_degree(u)));
+	}			
+}
+
+pair<NodeID, int> PopMin(Min_Heap * heap){
+	pair<NodeID, int> root = heap->nodeDegPairs[0];
+
+	heap->nodeDegPairs[0] = heap->nodeDegPairs.back();
+	heap->index[0] = heap->index.back();
+
+	heap->nodeDegPairs.pop_back();
+	heap->index.pop_back();
+
+	BubbleDown(heap, heap->nodeDegPairs.size(), 0);
+	return root;
 }
 
 vector<int> OrdCore(Graph &g){
@@ -69,18 +96,9 @@ vector<int> OrdCore(Graph &g){
 	Min_Heap heap;
 	//Initialize Heap
 	InitHeap(g, &heap);
-
-	//Sort Heap
-	for(int i = n/2 - 1; i >= 0; i--){
-		Heapify(&heap, n, i);
-	}
-	//Setting Pointers
-	for(int i = 0; i < g.num_nodes(); i++){
-		heap.index[heap.nodeDegPairs[i].first] = i;
-	}
 	
 	for(int i = n - 1; i >= 0; i--){
-		pair<NodeID, int> root = heap.nodeDegPairs[0];
+		pair<NodeID, int> root = PopMin(&heap);
 		//Update ranking
 		ranking[root.first] = n - (++r);
 
@@ -88,16 +106,8 @@ vector<int> OrdCore(Graph &g){
 		for(NodeID neighbor: g.out_neigh(root.first)){
 			int index = heap.index[neighbor];
 			heap.nodeDegPairs[index].second--;
+			BubbleUp(&heap, index);
 		}
-		
-		//Moving root to the end of the vector and removing
-		swap(heap.nodeDegPairs[0], heap.nodeDegPairs[i]);
-		swap(heap.index[0], heap.index[i]);
-		//heap.nodeDegPairs.pop_back();
-		//heap.index.pop_back();
-
-		//Re-arranging heap
-		Heapify(&heap, i, 0);
 	}
 	
 	return ranking;
@@ -216,11 +226,9 @@ int main(int argc, char* argv[]){
 		ranking = GetRankFromFile(cli.file_name());
 	}
 
-	/*
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
-	}*/
-	
+	}
 
 	Graph dag = b.RelabelByRank(g, ranking);
 	Init(dag, &graph_struct, cli.clique_size());
