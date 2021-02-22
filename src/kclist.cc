@@ -77,6 +77,7 @@ void InitHeap(Graph &g, Min_Heap *heap){
 
 pair<NodeID, int> PopMin(Min_Heap * heap){
 	pair<NodeID, int> root = heap->nodeDegPairs[0];
+	heap->index[root.first] = -1;
 
 	heap->nodeDegPairs[0] = heap->nodeDegPairs.back();
 	heap->index[heap->nodeDegPairs[0].first] = 0;
@@ -105,18 +106,11 @@ vector<int> OrdCore(Graph &g){
 		//Update degrees for all neighbors of root
 		for(NodeID neighbor: g.out_neigh(root.first)){
 			int index = heap.index[neighbor];
-			heap.nodeDegPairs[index].second--;
-			BubbleUp(&heap, index);
+			if(index != -1){
+				heap.nodeDegPairs[index].second--;
+				BubbleUp(&heap, index);
+			}
 		}
-		cout << "Updated heap:"<<endl;
-		for(auto elem: heap.nodeDegPairs){
-			cout << elem.first << ": " << elem.second << endl;
-		}
-		cout << "Updated Pointers:"<<endl;
-		for(auto elem: heap.index){
-			cout << elem << endl;
-		}
-		
 	}
 	
 	return ranking;
