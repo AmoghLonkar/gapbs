@@ -45,16 +45,16 @@ void BubbleDown(Min_Heap *heap, int n, int i){
 
 	if(root != i){
 		swap(heap->nodeDegPairs[i], heap->nodeDegPairs[root]);
-		swap(heap->index[i], heap->index[root]);
+		swap(heap->index[heap->nodeDegPairs[i].first], heap->index[heap->nodeDegPairs[root].first]);
 		BubbleDown(heap, n, root);
 	}
 }
 
 void BubbleUp(Min_Heap *heap, int i){
 	int parent = (i-1) / 2;
-	if(i > 0 && heap->nodeDegPairs[parent] > heap->nodeDegPairs[i]){
+	if(i > 0 && heap->nodeDegPairs[parent].second > heap->nodeDegPairs[i].second){
 		swap(heap->nodeDegPairs[i], heap->nodeDegPairs[parent]);
-		swap(heap->index[i], heap->index[parent]);
+		swap(heap->index[heap->nodeDegPairs[i].first], heap->index[heap->nodeDegPairs[parent].first]);
 		BubbleUp(heap, parent);
 	}
 }
@@ -79,7 +79,7 @@ pair<NodeID, int> PopMin(Min_Heap * heap){
 	pair<NodeID, int> root = heap->nodeDegPairs[0];
 
 	heap->nodeDegPairs[0] = heap->nodeDegPairs.back();
-	heap->index[0] = heap->index.back();
+	heap->index[heap->nodeDegPairs[0].first] = 0;
 
 	heap->nodeDegPairs.pop_back();
 	heap->index.pop_back();
@@ -96,7 +96,7 @@ vector<int> OrdCore(Graph &g){
 	Min_Heap heap;
 	//Initialize Heap
 	InitHeap(g, &heap);
-	
+
 	for(int i = n - 1; i >= 0; i--){
 		pair<NodeID, int> root = PopMin(&heap);
 		//Update ranking
@@ -108,6 +108,15 @@ vector<int> OrdCore(Graph &g){
 			heap.nodeDegPairs[index].second--;
 			BubbleUp(&heap, index);
 		}
+		cout << "Updated heap:"<<endl;
+		for(auto elem: heap.nodeDegPairs){
+			cout << elem.first << ": " << elem.second << endl;
+		}
+		cout << "Updated Pointers:"<<endl;
+		for(auto elem: heap.index){
+			cout << elem << endl;
+		}
+		
 	}
 	
 	return ranking;
