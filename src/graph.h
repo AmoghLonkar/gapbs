@@ -254,7 +254,7 @@ class CSRGraph {
     return Range<NodeID_>(num_nodes());
   }
 
- private:
+ protected:
   bool directed_;
   int64_t num_nodes_;
   int64_t num_edges_;
@@ -264,4 +264,50 @@ class CSRGraph {
   DestID_*  in_neighbors_;
 };
 
+
+template <class NodeID_, class DestID_ = NodeID_, bool MakeInverse = true>
+class TransmutableNeighborhoodCSR : public CSRGraph<NodeID_, DestID_>{
+
+  // Used for *non-negative* offsets within a neighborhood
+  typedef std::make_unsigned<std::ptrdiff_t>::type OffsetT;
+  
+  class TruncatedNeighborhood {
+    NodeID_ n_;
+    DestID_** g_index_;
+    OffsetT start_offset_;
+    int64_t neighborhood_size_;
+   public:
+    TruncatedNeighborhood(NodeID_ n, DestID_** g_index, OffsetT start_offset, int64_t n_size) :
+        n_(n), g_index_(g_index), start_offset_(0), neighborhood_size_(n_size) {
+      OffsetT max_offset = end() - begin();
+      start_offset_ = std::min(start_offset, max_offset);
+    }
+    typedef DestID_* iterator;
+    iterator begin() { return g_index_[n_] + start_offset_; }
+    iterator end()   { return g_index_[n_] + start_offset_ + neighborhood_size_; }
+  };
+
+public:
+  TransmutableNeighborhoodCSR(): truncated_neighborhood_sizes_({-1}) {};
+  TransmutableNeighborhoodCSR(std::vector<int64_t> neighborhood_sizes_): truncated_neighborhood_sizes_{neighborhood_sizes_} {};
+  
+  void SetNeighborhoodSizes(){
+    for(NodeID_ u = 0; u < this->num_nodes; u++){
+      truncated_neighborhood_sizes_[u] = this->out_degree(u);
+    }
+  }
+
+  TruncatedNeighborhood out_neigh(NodeID_ n, OffsetT start_offset = 0) const {
+    return TruncatedNeighborhood(n, this->out_index_, start_offset, truncated_neighborhood_sizes_[n]);
+  } 
+
+  /*
+  void ReorderNeighList(NodeID_ root, NodeID_ neighbor, DestID_ *out_neighbors){
+    std::swap(node, );
+    truncated_neighborhood_size_--;
+  }*/
+
+  private: 
+    std::vector<int64_t> truncated_neighborhood_sizes_;
+};
 #endif  // GRAPH_H_
