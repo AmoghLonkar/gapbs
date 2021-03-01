@@ -229,11 +229,7 @@ int main(int argc, char* argv[]){
 		ranking = GetRankFromFile(cli.file_name());
 	}
 
-	for(auto elem: ranking){
-		cout << "Ranking: " << elem << endl;
-	}
-
-	Graph dag = b.RelabelByRank(g, ranking);
+	TGraph dag = b.RelabelByRank(g, ranking);
 	Init(dag, &graph_struct, cli.clique_size());
 
 	auto end = std::chrono::system_clock::now();
