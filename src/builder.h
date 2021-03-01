@@ -306,7 +306,7 @@ class BuilderBase {
   }	  
 
   // Relabels (and rebuilds) graph by order of decreasing degree
-  CSRGraph<NodeID_, DestID_, invert> RelabelByRank(
+  TransmutableNeighborhoodCSR<NodeID_, DestID_, invert> RelabelByRank(
       const CSRGraph<NodeID_, DestID_, invert> &g, std::vector<int> ranking) {
       EdgeList el;
       for (NodeID_ u=0; u < g.num_nodes(); u++) {
@@ -322,7 +322,14 @@ class BuilderBase {
 
     CSRGraph<NodeID_, DestID_, invert> dag;
 	  dag = MakeGraphFromEL(el);
-    return SquishGraph(dag);
+    dag = SquishGraph(dag);
+
+    std::vector<int64_t> degrees;
+    for(NodeID_ u=0; u < dag.num_nodes(); u++){
+      degrees.push_back(dag.out_degree(u));
+    }
+
+    return TransmutableNeighborhoodCSR<NodeID_, DestID_>(dag, degrees);
   }
 
 };
