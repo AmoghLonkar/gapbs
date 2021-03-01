@@ -33,7 +33,9 @@ typedef int32_t WeightT;
 typedef NodeWeight<NodeID, WeightT> WNode;
 
 typedef CSRGraph<NodeID> Graph;
+typedef TransmutableNeighborhoodCSR<NodeID> TGraph;
 typedef CSRGraph<NodeID, WNode> WGraph;
+
 
 typedef BuilderBase<NodeID, NodeID, WeightT> Builder;
 typedef BuilderBase<NodeID, WNode, WeightT> WeightedBuilder;
