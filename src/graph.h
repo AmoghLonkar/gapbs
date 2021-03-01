@@ -288,8 +288,8 @@ class TransmutableNeighborhoodCSR : public CSRGraph<NodeID_, DestID_>{
   };
 
 public:
-  TransmutableNeighborhoodCSR(): truncated_neighborhood_sizes_({-1}) {};
-  TransmutableNeighborhoodCSR(std::vector<int64_t> neighborhood_sizes_): truncated_neighborhood_sizes_{neighborhood_sizes_} {};
+  TransmutableNeighborhoodCSR() : truncated_neighborhood_sizes_({-1}) {};
+  TransmutableNeighborhoodCSR(CSRGraph<NodeID_, DestID_>& other, std::vector<int64_t> neighborhood_sizes_) : CSRGraph(other), truncated_neighborhood_sizes_{neighborhood_sizes_} {};
   
   void SetNeighborhoodSizes(){
     for(NodeID_ u = 0; u < this->num_nodes; u++){
