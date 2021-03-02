@@ -128,28 +128,44 @@ vector<int> GetRankFromFile(string fileName){
 	return ranking;
 }
 
-void Init(Graph &g, Graph_Info *g_i, int k){
+vector<vector<NodeID>> GenDag(Graph &g, vector<int> ranking){
+	vector<vector<NodeID>> dag(g.num_nodes());
+
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		for(NodeID v: g.out_neigh(u)){
+			if(ranking[u] < ranking[v]){
+				dag[ranking[v]].push_back(ranking[u]);
+			}
+			else{
+				dag[ranking[u]].push_back(ranking[v]);
+			}
+		}
+	}
+	return dag;
+}
+
+void Init(vector<vector<NodeID>> g, Graph_Info *g_i, int k){
 	vector<int> ns(k+1, 0);
-    ns[k] = g.num_nodes();	
+    ns[k] = g.size();	
 	g_i->ns = ns;
 
-	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		d[k][u] = g.out_degree(u);
+	vector<vector<int>> d(k+1, vector<int>(g.size(), 0));
+	for(NodeID u = 0; u < g.size(); u++){
+		d[k][u] = g[u].size();
 	}
 	g_i->d = d;
 	
-	vector<vector<NodeID>> sub(k+1, vector<NodeID>(g.num_nodes(), 0));
-	for(NodeID u = 0; u < g.num_nodes(); u++){
+	vector<vector<NodeID>> sub(k+1, vector<NodeID>(g.size(), 0));
+	for(NodeID u = 0; u < g.size(); u++){
 		sub[k][u] = u; 
 	}
 	g_i->sub = sub;	
 
-	vector<int> lab(g.num_nodes(), k);
+	vector<int> lab(g.size(), k);
 	g_i->lab = lab;
 }
 
-void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
+void Listing(vector<vector<NodeID>> &g, Graph_Info *g_i, int l, unsigned int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
@@ -164,7 +180,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(NodeID v: g.out_neigh(u)){
+		for(NodeID v: g[u]){
 			if(g_i->lab[v] == l){
 				g_i->lab[v] = l-1;
 				
@@ -182,7 +198,7 @@ void Listing(Graph &g, Graph_Info *g_i, int l, unsigned int *n){
 			NodeID u = g_i->sub[l-1][j];
 
 			// Looking at edges between nodes 
-			for(NodeID v: g.out_neigh(u)){
+			for(NodeID v: g[u]){
 				// Node is present in the subgraph
 				if(g_i->lab[v] == l-1){
 					(g_i->d[l-1][j])++;
@@ -229,12 +245,24 @@ int main(int argc, char* argv[]){
 		ranking = GetRankFromFile(cli.file_name());
 	}
 
+	/*
 	for(auto elem: ranking){
 		cout << "Ranking: " << elem << endl;
-	}
+	}*/
 
-	Graph dag = b.RelabelByRank(g, ranking);
+	//Graph dag = b.RelabelByRank(g, ranking);
+	vector<vector<NodeID>> dag = GenDag(g, ranking);
 	Init(dag, &graph_struct, cli.clique_size());
+
+	int index = 0;
+	for(auto neighborhood: dag){
+		cout << index << ": ";
+		index++;
+		for(auto node: neighborhood){
+			cout << node << " ";
+		}
+		cout << endl;
+	}
 
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
