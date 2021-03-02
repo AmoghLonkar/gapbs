@@ -187,7 +187,6 @@ void Listing(vector<vector<NodeID>> &g, Graph_Info *g_i, int l, unsigned int *n)
 				// Adding nodes to subgraph
 				g_i->sub[l-1][g_i->ns[l-1]++] = v;
 			}
-			
 		}
 		
 		// Only proceed if there is potential for a clique
@@ -196,12 +195,18 @@ void Listing(vector<vector<NodeID>> &g, Graph_Info *g_i, int l, unsigned int *n)
 		for(int j = 0; j < g_i->ns[l-1]; j++){
 			g_i->d[l-1][j] = 0;
 			NodeID u = g_i->sub[l-1][j];
-
+			
 			// Looking at edges between nodes 
-			for(NodeID v: g[u]){
+			int neighborhood_size = g[u].size();
+			for(int k = 0; k < neighborhood_size; k++){
+				NodeID v = g[u][k];
 				// Node is present in the subgraph
 				if(g_i->lab[v] == l-1){
 					(g_i->d[l-1][j])++;
+				}
+				else{
+					swap(g[u][k--], g[u][--neighborhood_size]);
+					g[u][neighborhood_size] = v;	
 				}
 			}
 		}
@@ -253,16 +258,6 @@ int main(int argc, char* argv[]){
 	//Graph dag = b.RelabelByRank(g, ranking);
 	vector<vector<NodeID>> dag = GenDag(g, ranking);
 	Init(dag, &graph_struct, cli.clique_size());
-
-	int index = 0;
-	for(auto neighborhood: dag){
-		cout << index << ": ";
-		index++;
-		for(auto node: neighborhood){
-			cout << node << " ";
-		}
-		cout << endl;
-	}
 
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
