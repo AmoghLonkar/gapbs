@@ -20,6 +20,8 @@ using namespace std;
 
 struct Graph_Info{
 	vector<int> ns;
+	vector<int> cd;
+	vector<NodeID> adj_list;
 	vector<vector<int>> d;
 	vector<vector<NodeID>> sub;
 	vector<int> lab;
@@ -128,44 +130,60 @@ vector<int> GetRankFromFile(string fileName){
 	return ranking;
 }
 
-vector<vector<NodeID>> GenDag(Graph &g, vector<int> ranking){
-	vector<vector<NodeID>> dag(g.num_nodes());
-
+void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
+	
+	//Get list of edges
+	vector<pair<NodeID, NodeID>> edges(g.num_edges());
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		for(NodeID v: g.out_neigh(u)){
 			if(ranking[u] < ranking[v]){
-				dag[ranking[v]].push_back(ranking[u]);
+				edges.push_back(make_pair(ranking[v], ranking[u]));
 			}
 			else{
-				dag[ranking[u]].push_back(ranking[v]);
+				edges.push_back(make_pair(ranking[u], ranking[v]));
 			}
 		}
 	}
-	return dag;
-}
 
-void Init(vector<vector<NodeID>> g, Graph_Info *g_i, int k){
 	vector<int> ns(k+1, 0);
-    ns[k] = g.size();	
+    ns[k] = g.num_nodes();	
 	g_i->ns = ns;
+	ns.clear();
 
-	vector<vector<int>> d(k+1, vector<int>(g.size(), 0));
-	for(NodeID u = 0; u < g.size(); u++){
-		d[k][u] = g[u].size();
+	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
+	for(NodeID u = 0; u < g.num_nodes(); u++){
+		d[k][u] = g.out_degree(u);
 	}
-	g_i->d = d;
+
+	vector<int> cd(g.num_nodes() + 1);
+	partial_sum(d[k].begin(), d[k].end(), cd[1]);
+	fill(d[k].begin(), d[k].end(), 0);
+
+	vector<NodeID> adj_list(g.num_edges(), 0);
+	for(int i = 1; i < g.num_edges(); i++){
+		adj_list[cd[edges[i].first] + d[k][edges[i].first]++] = edges[i].second;
+	}
 	
-	vector<vector<NodeID>> sub(k+1, vector<NodeID>(g.size(), 0));
-	for(NodeID u = 0; u < g.size(); u++){
+	g_i->d = d;
+	d.clear();
+	g_i->cd = cd;
+	cd.clear();
+	g_i->adj_list = adj_list;
+	adj_list.clear();
+	
+	vector<vector<NodeID>> sub(k+1, vector<NodeID>(g.num_nodes(), 0));
+	for(NodeID u = 0; u < g.num_nodes(); u++){
 		sub[k][u] = u; 
 	}
 	g_i->sub = sub;	
+	sub.clear();
 
-	vector<int> lab(g.size(), k);
+	vector<int> lab(g.num_nodes(), k);
 	g_i->lab = lab;
+	lab.clear();
 }
 
-void Listing(vector<vector<NodeID>> &g, Graph_Info *g_i, int l, unsigned int *n){
+void Listing(Graph_Info *g_i, int l, unsigned int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
@@ -211,7 +229,7 @@ void Listing(vector<vector<NodeID>> &g, Graph_Info *g_i, int l, unsigned int *n)
 		}
 		//}
 		
-		Listing(g, g_i, l-1, n);
+		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
 		for(int i = 0; i < g_i->ns[l-1]; i++){
@@ -255,8 +273,8 @@ int main(int argc, char* argv[]){
 	}*/
 
 	//Graph dag = b.RelabelByRank(g, ranking);
-	vector<vector<NodeID>> dag = GenDag(g, ranking);
-	Init(dag, &graph_struct, cli.clique_size());
+	//vector<vector<NodeID>> dag = GenDag(g, ranking);
+	GenGraph(g, &graph_struct, ranking, cli.clique_size());
 
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
@@ -264,7 +282,7 @@ int main(int argc, char* argv[]){
 	
 	start = std::chrono::system_clock::now();
 	unsigned int n = 0;
-	Listing(dag, &graph_struct, cli.clique_size(), &n);
+	Listing(&graph_struct, cli.clique_size(), &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	
