@@ -254,7 +254,7 @@ class CSRGraph {
     return Range<NodeID_>(num_nodes());
   }
 
- protected:
+ private:
   bool directed_;
   int64_t num_nodes_;
   int64_t num_edges_;
@@ -289,17 +289,29 @@ class TransmutableNeighborhoodCSR : public CSRGraph<NodeID_, DestID_>{
 
 public:
   TransmutableNeighborhoodCSR() : truncated_neighborhood_sizes_({-1}) {};
-  TransmutableNeighborhoodCSR(CSRGraph<NodeID_, DestID_>& other, std::vector<int64_t> neighborhood_sizes_) : CSRGraph(other), truncated_neighborhood_sizes_{neighborhood_sizes_} {};
+  TransmutableNeighborhoodCSR(CSRGraph<NodeID_, DestID_> graph, std::vector<int64_t> neighborhood_sizes_) : truncated_neighborhood_sizes_{neighborhood_sizes_} 
+  {
+    this->directed_ = graph.directed_;
+    this->num_nodes_ = graph.num_nodes_;
+    this->num_edges_ = graph.num_edges_;
+    this->out_index_ = graph.out_index_;
+    this->out_neighbors_ = graph.out_neighbors_;
+    this->in_index_ = graph.in_index_;
+    this->in_neighbors_ = graph.in_neighbors_;
+  };
   
+  /*
   void SetNeighborhoodSizes(){
     for(NodeID_ u = 0; u < this->num_nodes; u++){
-      truncated_neighborhood_sizes_[u] = this->out_degree(u);
+      //truncated_neighborhood_sizes_[u] = this->out_degree(u);
+      truncated_neighborhood_sizes_[u] = out_index_[u+1] - out_index_[u] ;
     }
-  }
+  }*/
 
+  /*
   TruncatedNeighborhood out_neigh(NodeID_ n, OffsetT start_offset = 0) const {
     return TruncatedNeighborhood(n, this->out_index_, start_offset, truncated_neighborhood_sizes_[n]);
-  } 
+  }*/
 
   /*
   void ReorderNeighList(NodeID_ root, NodeID_ neighbor, DestID_ *out_neighbors){
@@ -307,7 +319,7 @@ public:
     truncated_neighborhood_size_--;
   }*/
 
-  private: 
+  public: 
     std::vector<int64_t> truncated_neighborhood_sizes_;
 };
 #endif  // GRAPH_H_
