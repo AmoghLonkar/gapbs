@@ -155,8 +155,9 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 		d[k][u] = g.out_degree(u);
 	}
 
-	vector<int> cd(g.num_nodes() + 1);
-	partial_sum(d[k].begin(), d[k].end(), cd[1]);
+	vector<int> cd(g.num_nodes());
+	partial_sum(d[k].begin(), d[k].end(), cd.begin());
+	cd.insert(cd.begin(), 0);
 	fill(d[k].begin(), d[k].end(), 0);
 
 	vector<NodeID> adj_list(g.num_edges(), 0);
@@ -187,7 +188,7 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
-			(*n) += g_i->d[2][i];
+			(*n) += g_i->d[2][g_i->sub[2][i]];
 		}
 		return;	
 	}
@@ -198,12 +199,14 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(NodeID v: g[u]){
+		for(int j = g_i->cd[u]; j < g_i->cd[u] + g_i->d[l][u]; j++){
+			NodeID v = g_i->adj_list[j];
 			if(g_i->lab[v] == l){
 				g_i->lab[v] = l-1;
 				
 				// Adding nodes to subgraph
 				g_i->sub[l-1][g_i->ns[l-1]++] = v;
+				g_i->d[l-1][v] = 0;
 			}
 		}
 		
@@ -211,19 +214,18 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 		//if(g_i->ns[l-1] >= l - 1){
 		// Building subgraph
 		for(int j = 0; j < g_i->ns[l-1]; j++){
-			g_i->d[l-1][j] = 0;
 			NodeID u = g_i->sub[l-1][j];
 			
 			// Looking at edges between nodes 
-			int neighborhood_size = g[u].size();
-			for(int k = 0; k < neighborhood_size; k++){
-				NodeID v = g[u][k];
+			int neighborhood_size = g_i->cd[u] + g_i->d[l][u];
+			for(int k = g_i->cd[u]; k < neighborhood_size; k++){
+				NodeID v = g_i->adj_list[k];
 				// Node is present in the subgraph
 				if(g_i->lab[v] == l-1){
-					(g_i->d[l-1][j])++;
+					(g_i->d[l-1][u])++;
 				}
 				else{
-					swap(g[u][k--], g[u][--neighborhood_size]);
+					swap(g_i->adj_list[k--], g_i->adj_list[--neighborhood_size]);
 				}
 			}
 		}
