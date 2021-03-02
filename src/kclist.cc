@@ -206,7 +206,6 @@ void Listing(vector<vector<NodeID>> &g, Graph_Info *g_i, int l, unsigned int *n)
 				}
 				else{
 					swap(g[u][k--], g[u][--neighborhood_size]);
-					g[u][neighborhood_size] = v;	
 				}
 			}
 		}
