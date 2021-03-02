@@ -8,6 +8,7 @@
 #include <set>
 #include <omp.h>
 #include <queue>
+#include <numeric>
 #include <unordered_map>
 #include "benchmark.h"
 #include "builder.h"
@@ -185,7 +186,7 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 } 
 
 void Listing(Graph_Info *g_i, int l, unsigned int *n){
-
+	
 	if(l == 2){
 		for(int i = 0; i < g_i->ns[2]; i++){
 			(*n) += g_i->d[2][g_i->sub[2][i]];
