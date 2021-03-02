@@ -145,9 +145,8 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 			}
 		}
 	}
-
 	vector<int> ns(k+1, 0);
-    ns[k] = g.num_nodes();	
+    	ns[k] = g.num_nodes();	
 	g_i->ns = ns;
 	ns.clear();
 
@@ -162,10 +161,10 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 	fill(d[k].begin(), d[k].end(), 0);
 
 	vector<NodeID> adj_list(g.num_edges(), 0);
-	for(int i = 1; i < g.num_edges(); i++){
+	for(int i = 0; i < g.num_edges(); i++){
 		adj_list[cd[edges[i].first] + d[k][edges[i].first]++] = edges[i].second;
 	}
-	
+
 	g_i->d = d;
 	d.clear();
 	g_i->cd = cd;
