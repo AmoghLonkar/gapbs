@@ -254,7 +254,7 @@ class CSRGraph {
     return Range<NodeID_>(num_nodes());
   }
 
- private:
+ public:
   bool directed_;
   int64_t num_nodes_;
   int64_t num_edges_;
@@ -289,7 +289,7 @@ class TransmutableNeighborhoodCSR : public CSRGraph<NodeID_, DestID_>{
 
 public:
   TransmutableNeighborhoodCSR() : truncated_neighborhood_sizes_({-1}) {};
-  TransmutableNeighborhoodCSR(CSRGraph<NodeID_, DestID_> graph, std::vector<int64_t> neighborhood_sizes_) : truncated_neighborhood_sizes_{neighborhood_sizes_} 
+  TransmutableNeighborhoodCSR(CSRGraph<NodeID_, DestID_>& graph, std::vector<int64_t> neighborhood_sizes_) : truncated_neighborhood_sizes_{neighborhood_sizes_} 
   {
     this->directed_ = graph.directed_;
     this->num_nodes_ = graph.num_nodes_;
