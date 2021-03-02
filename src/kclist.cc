@@ -133,7 +133,7 @@ vector<int> GetRankFromFile(string fileName){
 void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 	
 	//Get list of edges
-	vector<pair<NodeID, NodeID>> edges(g.num_edges());
+	vector<pair<NodeID, NodeID>> edges;
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		for(NodeID v: g.out_neigh(u)){
 			if(ranking[u] < ranking[v]){
@@ -151,8 +151,8 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 	ns.clear();
 
 	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		d[k][u] = g.out_degree(u);
+	for(int i = 0; i < g.num_edges(); i++){
+		d[k][edges[i].first]++;
 	}
 
 	vector<int> cd(g.num_nodes());
@@ -182,7 +182,7 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 	vector<int> lab(g.num_nodes(), k);
 	g_i->lab = lab;
 	lab.clear();
-}
+} 
 
 void Listing(Graph_Info *g_i, int l, unsigned int *n){
 
@@ -239,7 +239,6 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 			g_i->lab[node] = l;
 		}
 	}
-
 }
 
 void PrintCliqueCount(int k, unsigned int *n){
