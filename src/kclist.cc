@@ -20,23 +20,23 @@
 using namespace std;
 
 struct Graph_Info{
-	vector<int> ns;
-	vector<int> cd;
+	vector<int64_t> ns;
+	vector<int64_t> cd;
 	vector<NodeID> adj_list;
-	vector<vector<int>> d;
+	vector<vector<int64_t>> d;
 	vector<vector<NodeID>> sub;
-	vector<int> lab;
+	vector<int64_t> lab;
 };
 
 struct Min_Heap{
-	vector<pair<NodeID, int>> nodeDegPairs;
-	vector<int> index;
+	vector<pair<NodeID, int64_t>> nodeDegPairs;
+	vector<int64_t> index;
 };
 
-void BubbleDown(Min_Heap *heap, int n, int i){
-	int root = i;
-	int leftChild = 2*i + 1;
-	int rightChild = 2*i + 2;
+void BubbleDown(Min_Heap *heap, int64_t n, int64_t i){
+	int64_t root = i;
+	int64_t leftChild = 2*i + 1;
+	int64_t rightChild = 2*i + 2;
 
 	if(leftChild < n && heap->nodeDegPairs[leftChild].second < heap->nodeDegPairs[root].second){
 		root = leftChild;
@@ -53,8 +53,8 @@ void BubbleDown(Min_Heap *heap, int n, int i){
 	}
 }
 
-void BubbleUp(Min_Heap *heap, int i){
-	int parent = (i-1) / 2;
+void BubbleUp(Min_Heap *heap, int64_t i){
+	int64_t parent = (i-1) / 2;
 	if(i > 0 && heap->nodeDegPairs[parent].second > heap->nodeDegPairs[i].second){
 		swap(heap->nodeDegPairs[i], heap->nodeDegPairs[parent]);
 		swap(heap->index[heap->nodeDegPairs[i].first], heap->index[heap->nodeDegPairs[parent].first]);
@@ -62,7 +62,7 @@ void BubbleUp(Min_Heap *heap, int i){
 	}
 }
 
-void InsertNode(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
+void InsertNode(Min_Heap *heap, pair<NodeID, int64_t> nodeDegPair){
 	heap->index[nodeDegPair.first] = heap->nodeDegPairs.size();
 	
 	heap->nodeDegPairs.push_back(nodeDegPair);
@@ -70,16 +70,17 @@ void InsertNode(Min_Heap *heap, pair<NodeID, int> nodeDegPair){
 }
 
 void InitHeap(Graph &g, Min_Heap *heap){
-	vector<NodeID> index(g.num_nodes(), -1);
+	vector<int64_t> index(g.num_nodes(), -1);
 	heap->index = index;
+	index.clear();
 
 	for(NodeID u = 0; u < g.num_nodes(); u++){
 		InsertNode(heap, make_pair(u, g.out_degree(u)));
 	}			
 }
 
-pair<NodeID, int> PopMin(Min_Heap * heap){
-	pair<NodeID, int> root = heap->nodeDegPairs[0];
+pair<NodeID, int64_t> PopMin(Min_Heap * heap){
+	pair<NodeID, int64_t> root = heap->nodeDegPairs[0];
 	heap->index[root.first] = -1;
 
 	heap->nodeDegPairs[0] = heap->nodeDegPairs.back();
@@ -92,23 +93,23 @@ pair<NodeID, int> PopMin(Min_Heap * heap){
 	return root;
 }
 
-vector<int> OrdCore(Graph &g){
-	vector<int> ranking(g.num_nodes());
-	int n = g.num_nodes();
-	int r = 0;
+vector<int64_t> OrdCore(Graph &g){
+	vector<int64_t> ranking(g.num_nodes());
+	int64_t n = g.num_nodes();
+	int64_t r = 0;
 
 	Min_Heap heap;
 	//Initialize Heap
 	InitHeap(g, &heap);
 
-	for(int i = n - 1; i >= 0; i--){
-		pair<NodeID, int> root = PopMin(&heap);
+	for(int64_t i = n - 1; i >= 0; i--){
+		pair<NodeID, int64_t> root = PopMin(&heap);
 		//Update ranking
 		ranking[root.first] = n - (++r);
 
 		//Update degrees for all neighbors of root
 		for(NodeID neighbor: g.out_neigh(root.first)){
-			int index = heap.index[neighbor];
+			int64_t index = heap.index[neighbor];
 			if(index != -1){
 				heap.nodeDegPairs[index].second--;
 				BubbleUp(&heap, index);
@@ -119,10 +120,10 @@ vector<int> OrdCore(Graph &g){
 	return ranking;
 }
 
-vector<int> GetRankFromFile(string fileName){
+vector<int64_t> GetRankFromFile(string fileName){
 	ifstream rankFile(fileName);
 	string temp;
-	vector<int> ranking;
+	vector<int64_t> ranking;
 	while(getline(rankFile, temp)){
 		ranking.push_back(stoi(temp));
 	}
@@ -131,7 +132,7 @@ vector<int> GetRankFromFile(string fileName){
 	return ranking;
 }
 
-void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
+void GenGraph(Graph& g, Graph_Info *g_i, vector<int64_t> ranking, int64_t k){
 	
 	//Get list of edges
 	vector<pair<NodeID, NodeID>> edges;
@@ -145,23 +146,23 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 			}
 		}
 	}
-	vector<int> ns(k+1, 0);
+	vector<int64_t> ns(k+1, 0);
     	ns[k] = g.num_nodes();	
 	g_i->ns = ns;
 	ns.clear();
 
-	vector<vector<int>> d(k+1, vector<int>(g.num_nodes(), 0));
-	for(int i = 0; i < g.num_edges(); i++){
+	vector<vector<int64_t>> d(k+1, vector<int64_t>(g.num_nodes(), 0));
+	for(int64_t i = 0; i < g.num_edges(); i++){
 		d[k][edges[i].first]++;
 	}
 
-	vector<int> cd(g.num_nodes());
+	vector<int64_t> cd(g.num_nodes());
 	partial_sum(d[k].begin(), d[k].end(), cd.begin());
 	cd.insert(cd.begin(), 0);
 	fill(d[k].begin(), d[k].end(), 0);
 
 	vector<NodeID> adj_list(g.num_edges(), 0);
-	for(int i = 0; i < g.num_edges(); i++){
+	for(int64_t i = 0; i < g.num_edges(); i++){
 		adj_list[cd[edges[i].first] + d[k][edges[i].first]++] = edges[i].second;
 	}
 
@@ -179,15 +180,15 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int> ranking, int k){
 	g_i->sub = sub;	
 	sub.clear();
 
-	vector<int> lab(g.num_nodes(), k);
+	vector<int64_t> lab(g.num_nodes(), k);
 	g_i->lab = lab;
 	lab.clear();
 } 
 
-void Listing(Graph_Info *g_i, int l, unsigned int *n){
+void Listing(Graph_Info *g_i, int64_t l, int64_t *n){
 	
 	if(l == 2){
-		for(int i = 0; i < g_i->ns[2]; i++){
+		for(int64_t i = 0; i < g_i->ns[2]; i++){
 			(*n) += g_i->d[2][g_i->sub[2][i]];
 		}
 		return;	
@@ -195,11 +196,11 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 	
 	// For each node in g_l
 	// Initializing vertex-induced subgraph
-	for(int i = 0; i < g_i->ns[l]; i++){
+	for(int64_t i = 0; i < g_i->ns[l]; i++){
 		g_i->ns[l-1] = 0;
 
 		NodeID u = g_i->sub[l][i];
-		for(int j = g_i->cd[u]; j < g_i->cd[u] + g_i->d[l][u]; j++){
+		for(int64_t j = g_i->cd[u]; j < g_i->cd[u] + g_i->d[l][u]; j++){
 			NodeID v = g_i->adj_list[j];
 			if(g_i->lab[v] == l){
 				g_i->lab[v] = l-1;
@@ -213,12 +214,12 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 		// Only proceed if there is potential for a clique
 		//if(g_i->ns[l-1] >= l - 1){
 		// Building subgraph
-		for(int j = 0; j < g_i->ns[l-1]; j++){
+		for(int64_t j = 0; j < g_i->ns[l-1]; j++){
 			NodeID u = g_i->sub[l-1][j];
 			
 			// Looking at edges between nodes 
-			int neighborhood_size = g_i->cd[u] + g_i->d[l][u];
-			for(int k = g_i->cd[u]; k < neighborhood_size; k++){
+			int64_t neighborhood_size = g_i->cd[u] + g_i->d[l][u];
+			for(int64_t k = g_i->cd[u]; k < neighborhood_size; k++){
 				NodeID v = g_i->adj_list[k];
 				// Node is present in the subgraph
 				if(g_i->lab[v] == l-1){
@@ -234,14 +235,14 @@ void Listing(Graph_Info *g_i, int l, unsigned int *n){
 		Listing(g_i, l-1, n);
 		
 		// Resetting labels	
-		for(int i = 0; i < g_i->ns[l-1]; i++){
+		for(int64_t i = 0; i < g_i->ns[l-1]; i++){
 			NodeID node = g_i->sub[l-1][i];
 			g_i->lab[node] = l;
 		}
 	}
 }
 
-void PrintCliqueCount(int k, unsigned int *n){
+void PrintCliqueCount(int64_t k, int64_t *n){
 	cout << "Number of " << k <<"-cliques: " << *n << endl;
 }
 
@@ -260,7 +261,7 @@ int main(int argc, char* argv[]){
 	Graph_Info graph_struct;
 	
 	auto start = std::chrono::system_clock::now();
-	vector<int> ranking;
+	vector<int64_t> ranking;
 	if(cli.file_name() == ""){
 		ranking = OrdCore(g);
 	}
@@ -282,7 +283,7 @@ int main(int argc, char* argv[]){
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 	
 	start = std::chrono::system_clock::now();
-	unsigned int n = 0;
+	int64_t n = 0;
 	Listing(&graph_struct, cli.clique_size(), &n);
 	end = std::chrono::system_clock::now();
 	elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
