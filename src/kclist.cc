@@ -33,6 +33,7 @@ struct Min_Heap{
 	vector<int64_t> index;
 };
 
+
 void BubbleDown(Min_Heap *heap, int64_t n, int64_t i){
 	int64_t root = i;
 	int64_t leftChild = 2*i + 1;
@@ -79,7 +80,7 @@ void InitHeap(Graph &g, Min_Heap *heap){
 	}			
 }
 
-pair<NodeID, int64_t> PopMin(Min_Heap * heap){
+pair<NodeID, int64_t> PopMin(Min_Heap *heap){
 	pair<NodeID, int64_t> root = heap->nodeDegPairs[0];
 	heap->index[root.first] = -1;
 
@@ -115,6 +116,10 @@ vector<int64_t> OrdCore(Graph &g){
 				BubbleUp(&heap, index);
 			}
 		}
+	}
+	
+	for(auto elem: ranking){
+		cout << "Ranking:" << elem << endl;
 	}
 	
 	return ranking;
