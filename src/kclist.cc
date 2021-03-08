@@ -316,13 +316,15 @@ int main(int argc, char* argv[]){
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
-
+	
+	/*
 	if(DAGCheck(&graph_struct, cli.clique_size())){
 		cout << "Ordering constraints not satisfied. Graph is not a DAG." << endl;
 	}
 	else{
 		cout << "Ordering constraints satisfied! Graph is a DAG." << endl;
 	}
+	*/
 
 	start = std::chrono::system_clock::now();
 	int64_t n = 0;
