@@ -118,9 +118,10 @@ vector<int64_t> OrdCore(Graph &g){
 		}
 	}
 	
+	/*
 	for(auto elem: ranking){
 		cout << "Ranking:" << elem << endl;
-	}
+	}*/
 	
 	return ranking;
 }
@@ -152,7 +153,7 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int64_t> ranking, int64_t k){
 		}
 	}
 	vector<int64_t> ns(k+1, 0);
-    	ns[k] = g.num_nodes();	
+    ns[k] = g.num_nodes();	
 	g_i->ns = ns;
 	ns.clear();
 
@@ -189,6 +190,38 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int64_t> ranking, int64_t k){
 	g_i->lab = lab;
 	lab.clear();
 } 
+
+bool CyclicityCheck(Graph& g, NodeID node, vector<bool> visited, vector<bool> recStack){
+	if(visited[node] == false){
+		visited[node] = true;
+		recStack[node] = true;
+
+		for(NodeID neighbor: g.out_neigh(node)){
+			if(!visited[neighbor] && CyclicityCheck(g, neighbor, visited, recStack)){
+				return true;
+			}
+			else if(recStack[neighbor]){
+				return true;
+			}
+		}
+	}
+
+	recStack[node] = false;
+	return false;
+}
+
+bool DAGCheck(Graph& g){
+	vector<bool> visited(g.num_nodes(), false);
+	vector<bool> recStack(g.num_nodes(), false);
+
+	for(int i = 0; i < g.num_nodes(); i++){
+		if(CyclicityCheck(g, i, visited, recStack)){
+			return true;
+		}
+	}
+
+	return false;
+}
 
 void Listing(Graph_Info *g_i, int64_t l, int64_t *n){
 	
@@ -274,11 +307,6 @@ int main(int argc, char* argv[]){
 		ranking = GetRankFromFile(cli.file_name());
 	}
 
-	/*
-	for(auto elem: ranking){
-		cout << "Ranking: " << elem << endl;
-	}*/
-
 	//Graph dag = b.RelabelByRank(g, ranking);
 	//vector<vector<NodeID>> dag = GenDag(g, ranking);
 	GenGraph(g, &graph_struct, ranking, cli.clique_size());
@@ -286,7 +314,15 @@ int main(int argc, char* argv[]){
 	auto end = std::chrono::system_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
-	
+
+	Graph dag = b.RelabelByRank(g, ranking);
+	if(DAGCheck(dag)){
+		cout << "Ordering constraints not satisfied. Graph is not a DAG." << endl;
+	}
+	else{
+		cout << "Ordering constraints satisfied! Graph is a DAG." << endl;
+	}
+
 	start = std::chrono::system_clock::now();
 	int64_t n = 0;
 	Listing(&graph_struct, cli.clique_size(), &n);
