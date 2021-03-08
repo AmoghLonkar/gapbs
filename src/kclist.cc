@@ -177,9 +177,6 @@ vector<int> OrdCore(Graph &g, Graph_Info *g_i, Min_Heap *heap){
 	}
 
 	MkHeap(heap, d0, n);
-	for(int i = 0; i < heap->n; i++){
-		cout << "Heap: " << heap->kv_pair[i].first << ": " << heap->kv_pair[i].second << endl;
-	}
 
 	for(int i = 0; i < n; i++){
 		pair<NodeID, int> root = PopMin(heap);
@@ -197,13 +194,10 @@ vector<int> OrdCore(Graph &g, Graph_Info *g_i, Min_Heap *heap){
 	d0.clear();
 	cd0.clear();
 	adj0.clear();
-	/*
-	cout << "Ranking: ";
+	
 	for(auto elem: ranking){
-		cout << elem << " ";
+		cout << "Ranking:" << elem << endl;
 	}
-	cout << endl;
-	*/
 
 	return ranking;
 }
