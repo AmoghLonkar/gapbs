@@ -181,23 +181,20 @@ vector<int> OrdCore(Graph &g, Graph_Info *g_i, Min_Heap *heap){
 	for(int i = 0; i < n; i++){
 		pair<NodeID, int> root = PopMin(heap);
 		ranking[root.first] = n - (++r);
-		
+			
 		for(NodeID j = cd0[root.first]; j < cd0[root.first + 1]; j++){
 			UpdateHeap(heap, adj0[j]);
 		}
-		/*
-		for(NodeID neighbor: g.out_neigh(root.first)){
-			UpdateHeap(heap, neighbor);
-		}*/
 	}
 
 	d0.clear();
 	cd0.clear();
 	adj0.clear();
 	
+	/*	
 	for(auto elem: ranking){
 		cout << "Ranking:" << elem << endl;
-	}
+	}*/
 
 	return ranking;
 }
