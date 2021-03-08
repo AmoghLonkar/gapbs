@@ -144,14 +144,13 @@ pair<NodeID, int> PopMin(Min_Heap *heap){
 	return root;
 }
 
-void MkHeap(Graph &g, Min_Heap *heap){
-	InitHeap(heap, g.num_nodes());
+void MkHeap(Min_Heap *heap, vector<int> degrees, int n){
+	InitHeap(heap, n);
 	
-	for(NodeID u = 0; u < g.num_nodes(); u++){
-		pair<NodeID, int> nodeDegPair = make_pair(u, 2*g.out_degree(u));
+	for(NodeID u = 0; u < n; u++){
+		pair<NodeID, int> nodeDegPair = make_pair(u, degrees[u]);
 		Insert(heap, nodeDegPair);
 	}
-	
 }
 
 vector<int> OrdCore(Graph &g, Graph_Info *g_i, Min_Heap *heap){
@@ -177,7 +176,11 @@ vector<int> OrdCore(Graph &g, Graph_Info *g_i, Min_Heap *heap){
 		adj0[cd0[g_i->edges[i].dest] + d0[g_i->edges[i].dest]++] = g_i->edges[i].source;
 	}
 
-	MkHeap(g, heap);
+	MkHeap(heap, d0, n);
+	for(int i = 0; i < heap->n; i++){
+		cout << "Heap: " << heap->kv_pair[i].first << ": " << heap->kv_pair[i].second << endl;
+	}
+
 	for(int i = 0; i < n; i++){
 		pair<NodeID, int> root = PopMin(heap);
 		ranking[root.first] = n - (++r);
