@@ -307,7 +307,7 @@ class BuilderBase {
 
   // Relabels (and rebuilds) graph by order of decreasing degree
   CSRGraph<NodeID_, DestID_, invert> RelabelByRank(
-      const CSRGraph<NodeID_, DestID_, invert> &g, std::vector<int> ranking) {
+      const CSRGraph<NodeID_, DestID_, invert> &g, std::vector<int64_t> ranking) {
       EdgeList el;
       for (NodeID_ u=0; u < g.num_nodes(); u++) {
       for(NodeID_ v: g.out_neigh(u)){
