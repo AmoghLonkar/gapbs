@@ -191,13 +191,14 @@ void GenGraph(Graph& g, Graph_Info *g_i, vector<int64_t> ranking, int64_t k){
 	lab.clear();
 } 
 
-bool CyclicityCheck(Graph& g, NodeID node, vector<bool> visited, vector<bool> recStack){
+bool CyclicityCheck(Graph_Info *g_i, NodeID node, vector<bool> visited, vector<bool> recStack){
 	if(visited[node] == false){
 		visited[node] = true;
 		recStack[node] = true;
-
-		for(NodeID neighbor: g.out_neigh(node)){
-			if(!visited[neighbor] && CyclicityCheck(g, neighbor, visited, recStack)){
+		
+		set<NodeID> neighbors(g_i->adj_list.begin() + g_i->cd[node], g_i->adj_list.begin() + g_i->cd[node + 1]);
+		for(NodeID neighbor: neighbors){
+			if(visited[neighbor] && CyclicityCheck(g_i, neighbor, visited, recStack)){
 				return true;
 			}
 			else if(recStack[neighbor]){
@@ -210,12 +211,13 @@ bool CyclicityCheck(Graph& g, NodeID node, vector<bool> visited, vector<bool> re
 	return false;
 }
 
-bool DAGCheck(Graph& g){
-	vector<bool> visited(g.num_nodes(), false);
-	vector<bool> recStack(g.num_nodes(), false);
+bool DAGCheck(Graph_Info *g_i, int k){
+	int n = g_i->ns[k];
+	vector<bool> visited(n, false);
+	vector<bool> recStack(n, false);
 
-	for(int i = 0; i < g.num_nodes(); i++){
-		if(CyclicityCheck(g, i, visited, recStack)){
+	for(int i = 0; i < g_i->ns[k]; i++){
+		if(CyclicityCheck(g_i, i, visited, recStack)){
 			return true;
 		}
 	}
@@ -315,8 +317,7 @@ int main(int argc, char* argv[]){
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 	cout << "Time to create graph struct: " << elapsed.count() << "s" << endl; 
 
-	Graph dag = b.RelabelByRank(g, ranking);
-	if(DAGCheck(dag)){
+	if(DAGCheck(&graph_struct, cli.clique_size())){
 		cout << "Ordering constraints not satisfied. Graph is not a DAG." << endl;
 	}
 	else{
