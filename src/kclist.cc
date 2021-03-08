@@ -148,26 +148,52 @@ void MkHeap(Graph &g, Min_Heap *heap){
 	InitHeap(heap, g.num_nodes());
 	
 	for(NodeID u = 0; u < g.num_nodes(); u++){
-		pair<NodeID, int> nodeDegPair = make_pair(u, g.out_degree(u));
+		pair<NodeID, int> nodeDegPair = make_pair(u, 2*g.out_degree(u));
 		Insert(heap, nodeDegPair);
 	}
 	
 }
 
-vector<int> OrdCore(Graph &g, Min_Heap *heap){
+vector<int> OrdCore(Graph &g, Graph_Info *g_i, Min_Heap *heap){
 
 	vector<int> ranking(g.num_nodes());
 	int n = g.num_nodes();
 	int r = 0;
 
+	vector<int> d0(n, 0);
+	for(int i = 0; i < g.num_edges(); i++){
+		d0[g_i->edges[i].source]++;
+		d0[g_i->edges[i].dest]++;
+	}
+
+	vector<int> cd0(g.num_nodes());
+	partial_sum(d0.begin(), d0.end(), cd0.begin());
+	cd0.insert(cd0.begin(), 0);
+	fill(d0.begin(), d0.end(), 0);
+
+	vector<NodeID> adj0(2*g.num_edges(), 0);
+	for(NodeID i = 0; i < g.num_edges(); i++){
+		adj0[cd0[g_i->edges[i].source] + d0[g_i->edges[i].source]++] = g_i->edges[i].dest;
+		adj0[cd0[g_i->edges[i].dest] + d0[g_i->edges[i].dest]++] = g_i->edges[i].source;
+	}
+
 	MkHeap(g, heap);
 	for(int i = 0; i < n; i++){
 		pair<NodeID, int> root = PopMin(heap);
 		ranking[root.first] = n - (++r);
+		
+		for(NodeID j = cd0[root.first]; j < cd0[root.first + 1]; j++){
+			UpdateHeap(heap, adj0[j]);
+		}
+		/*
 		for(NodeID neighbor: g.out_neigh(root.first)){
 			UpdateHeap(heap, neighbor);
-		}
+		}*/
 	}
+
+	d0.clear();
+	cd0.clear();
+	adj0.clear();
 	/*
 	cout << "Ranking: ";
 	for(auto elem: ranking){
@@ -288,7 +314,7 @@ int main(int argc, char* argv[]){
 	auto start = std::chrono::system_clock::now();
 	
 	Min_Heap bin_heap;
-	vector<int> ranking = OrdCore(g, &bin_heap);
+	vector<int> ranking = OrdCore(g, &graph_struct, &bin_heap);
 	Relabel(&graph_struct, ranking);
 	//Graph dag = b.MakeDagFromRank(g, ranking);
 	
