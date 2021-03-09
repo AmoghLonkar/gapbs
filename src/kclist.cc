@@ -100,7 +100,7 @@ vector<int64_t> OrdCore(Graph &g){
 	int64_t r = 0;
 
 	Min_Heap heap;
-
+	
 	vector<pair<NodeID, NodeID>> edges;
 	for(NodeID u = 0; u < n; u++){
 		for(NodeID v: g.out_neigh(u)){
@@ -120,7 +120,7 @@ vector<int64_t> OrdCore(Graph &g){
 	fill(degrees.begin(), degrees.end(), 0);
 
 	vector<NodeID> adj_list(2*g.num_edges(), 0);
-	for(NodeID i = 0; i < n; i++){
+	for(NodeID i = 0; i < g.num_edges(); i++){
 		adj_list[cd[edges[i].first] + degrees[edges[i].first]++] = edges[i].second;
 		adj_list[cd[edges[i].second] + degrees[edges[i].second]++] = edges[i].first;
 	}
@@ -129,7 +129,7 @@ vector<int64_t> OrdCore(Graph &g){
 	//Initialize Heap
 	InitHeap(g, &heap, degrees);
 
-	for(int64_t i = n - 1; i >= 0; i--){
+	for(int64_t i = 0; i < g.num_nodes(); i++){
 		pair<NodeID, int64_t> root = PopMin(&heap);
 		//Update ranking
 		ranking[root.first] = n - (++r);
@@ -143,11 +143,10 @@ vector<int64_t> OrdCore(Graph &g){
 			}
 		}
 	}
-	
-	
+	/*
 	for(auto elem: ranking){
 		cout << "Ranking:" << elem << endl;
-	}
+	}*/
 	
 	return ranking;
 }
