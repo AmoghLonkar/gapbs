@@ -143,6 +143,7 @@ vector<int64_t> OrdCore(Graph &g){
 			}
 		}
 	}
+	
 	/*
 	for(auto elem: ranking){
 		cout << "Ranking:" << elem << endl;
