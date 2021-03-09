@@ -70,13 +70,13 @@ void InsertNode(Min_Heap *heap, pair<NodeID, int64_t> nodeDegPair){
 	BubbleUp(heap, heap->nodeDegPairs.size() - 1);
 }
 
-void InitHeap(Graph &g, Min_Heap *heap){
+void InitHeap(Graph &g, Min_Heap *heap, vector<int64_t> degrees){
 	vector<int64_t> index(g.num_nodes(), -1);
 	heap->index = index;
 	index.clear();
 
 	for(NodeID u = 0; u < g.num_nodes(); u++){
-		InsertNode(heap, make_pair(u, g.out_degree(u)));
+		InsertNode(heap, make_pair(u, degrees[u]));
 	}			
 }
 
@@ -100,8 +100,34 @@ vector<int64_t> OrdCore(Graph &g){
 	int64_t r = 0;
 
 	Min_Heap heap;
+
+	vector<pair<NodeID, NodeID>> edges;
+	for(NodeID u = 0; u < n; u++){
+		for(NodeID v: g.out_neigh(u)){
+			edges.push_back(make_pair(u, v));
+		}
+	}
+
+	vector<int64_t> degrees(n, 0);
+	for(int i = 0; i < g.num_edges(); i++){
+		degrees[edges[i].first]++;
+		degrees[edges[i].second]++;
+	}
+
+	vector<int64_t> cd(n);
+	partial_sum(degrees.begin(), degrees.end(), cd.begin());
+	cd.insert(cd.begin(), 0);
+	fill(degrees.begin(), degrees.end(), 0);
+
+	vector<NodeID> adj_list(2*g.num_edges(), 0);
+	for(NodeID i = 0; i < n; i++){
+		adj_list[cd[edges[i].first] + degrees[edges[i].first]++] = edges[i].second;
+		adj_list[cd[edges[i].second] + degrees[edges[i].second]++] = edges[i].first;
+	}
+
+
 	//Initialize Heap
-	InitHeap(g, &heap);
+	InitHeap(g, &heap, degrees);
 
 	for(int64_t i = n - 1; i >= 0; i--){
 		pair<NodeID, int64_t> root = PopMin(&heap);
@@ -109,8 +135,8 @@ vector<int64_t> OrdCore(Graph &g){
 		ranking[root.first] = n - (++r);
 
 		//Update degrees for all neighbors of root
-		for(NodeID neighbor: g.out_neigh(root.first)){
-			int64_t index = heap.index[neighbor];
+		for(int64_t j = cd[root.first]; j < cd[root.first + 1]; j++){
+			int64_t index = heap.index[adj_list[j]];
 			if(index != -1){
 				heap.nodeDegPairs[index].second--;
 				BubbleUp(&heap, index);
@@ -118,10 +144,10 @@ vector<int64_t> OrdCore(Graph &g){
 		}
 	}
 	
-	/*
+	
 	for(auto elem: ranking){
 		cout << "Ranking:" << elem << endl;
-	}*/
+	}
 	
 	return ranking;
 }
